@@ -44,7 +44,7 @@ public class HelloAWorld extends HttpServlet {
         Random r = new Random();
         int ri = Math.abs(r.nextInt() % 10000);
         pobj.put("person_id", email + "__" + ri).put("email", email).put("password", password)
-             .put("industries", industry).put("professions", profession).put("fullname", fullname);
+             .append("industries", industry).append("professions", profession).put("fullname", fullname);
         JSONArray ja = null;
         try {
         	DBUtils.addPerson(pobj);
