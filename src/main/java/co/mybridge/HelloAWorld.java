@@ -42,9 +42,9 @@ public class HelloAWorld extends HttpServlet {
         String fullname = req.getParameter("fullname");
         JSONObject pobj = new JSONObject();
         Random r = new Random();
-        int ri = r.nextInt() % 1000;
-        pobj.put("person_id", email + ri).put("email", email).put("password", password)
-             .put("industry", industry).put("profession", profession).put("fullname", fullname);
+        int ri = Math.abs(r.nextInt() % 10000);
+        pobj.put("person_id", email + "__" + ri).put("email", email).put("password", password)
+             .put("industries", industry).put("professions", profession).put("fullname", fullname);
         JSONArray ja = null;
         try {
         	DBUtils.addPerson(pobj);
