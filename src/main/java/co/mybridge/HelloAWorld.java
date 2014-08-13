@@ -1,6 +1,7 @@
 package co.mybridge;
 
 import java.io.IOException;
+import java.util.Random;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -38,9 +39,12 @@ public class HelloAWorld extends HttpServlet {
         String password = req.getParameter("password");
         String industry = req.getParameter("industry");
         String profession = req.getParameter("profession");
+        String fullname = req.getParameter("fullname");
         JSONObject pobj = new JSONObject();
-        pobj.put("person_id", email).put("email", email).put("password", password)
-             .put("industry", industry).put("profession", profession);
+        Random r = new Random();
+        int ri = r.nextInt() % 1000;
+        pobj.put("person_id", email + ri).put("email", email).put("password", password)
+             .put("industry", industry).put("profession", profession).put("fullname", fullname);
         JSONArray ja = null;
         try {
         	DBUtils.addPerson(pobj);
