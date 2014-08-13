@@ -22,7 +22,11 @@ import com.mongodb.WriteConcern;
 public class DBUtils {
 
 	public static DB getMongoDB() throws MongoException, UnknownHostException {
-		MongoURI mongoURI = new MongoURI(System.getenv("MONGOHQ_URL"));
+		String mongourl = System.getenv("MONGOHQ_URL");
+		if (mongourl == null || mongourl.length() < 2) {
+			mongourl = "mongodb://mb_user:mb_passwd@kahana.mongohq.com:10051/mongo_4_heroku";
+		}
+		MongoURI mongoURI = new MongoURI(mongourl);
 		DB db = mongoURI.connectDB();
 		db.authenticate(mongoURI.getUsername(), mongoURI.getPassword());
 
@@ -98,15 +102,15 @@ public class DBUtils {
     		retObj.put("person_id", pid);
     		retObj.put("fullname", fname);
     		
-    		List<String> indL = (List<String>)p.get("industries");
-    		JSONArray indA = new JSONArray();  		
-    		indA.put(indL);
-    		retObj.put("industries", indA);
+    		List<String> indL = (List<String>)p.get("industries"); 		
+    		for (String i : indL) {
+    			retObj.append("industries", i);
+    		}
     		
     		List<String> profL = (List<String>)p.get("professions");
-    		JSONArray profA = new JSONArray();
-    		profA.put(profL);
-    		retObj.put("professions", profA);
+    		for (String r: profL) {
+    			retObj.append("professions", r);
+    		}
     		
     		if (p.containsField("email") && p.containsField("password")) {
     			retObj.put("email", p.getString("email"));
@@ -127,10 +131,14 @@ public class DBUtils {
     	if (pobj == null) {
     		return;
     	}
-    	
+    	try {
     	DB  db = getMongoDB();
     	DBCollection coll = db.getCollection("mb_person");
     	coll.insert(pobj, WriteConcern.JOURNAL_SAFE);
+    	}
+    	catch(Exception x) {
+    		x.printStackTrace(System.out);
+    	}
     }
     
     public static JSONArray retrieveObjects(String collname, String... srchField) throws MongoException, UnknownHostException {

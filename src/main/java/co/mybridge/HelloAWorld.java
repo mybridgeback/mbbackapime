@@ -48,7 +48,7 @@ public class HelloAWorld extends HttpServlet {
         JSONArray ja = null;
         try {
         	DBUtils.addPerson(pobj);
-        	ja = DBUtils.retrieveObjects("mb_user", "no");
+        	ja = DBUtils.retrieveObjects("mb_person", "no");
         	out.write("All Registered Users: ".getBytes());
         	out.write(ja.toString(4).getBytes());
         }
