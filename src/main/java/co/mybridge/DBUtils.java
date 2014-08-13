@@ -91,26 +91,26 @@ public class DBUtils {
     	JSONObject retObj = new JSONObject();
     	try {
     		if (p.containsField("_id")) {
-    			retObj.append("_id", p.getString("_id"));
+    			retObj.put("_id", p.getString("_id"));
     		}
     		String pid = p.getString("person_id");
     		String fname = p.getString("fullname");
-    		retObj.append("person_id", pid);
-    		retObj.append("fullname", fname);
+    		retObj.put("person_id", pid);
+    		retObj.put("fullname", fname);
     		
     		List<String> indL = (List<String>)p.get("industries");
     		JSONArray indA = new JSONArray();  		
     		indA.put(indL);
-    		retObj.append("industries", indA);
+    		retObj.put("industries", indA);
     		
     		List<String> profL = (List<String>)p.get("professions");
     		JSONArray profA = new JSONArray();
     		profA.put(profL);
-    		retObj.append("professions", profA);
+    		retObj.put("professions", profA);
     		
     		if (p.containsField("email") && p.containsField("password")) {
     			retObj.put("email", p.getString("email"));
-    			retObj.append("password", p.getString("password"));
+    			retObj.put("password", p.getString("password"));
     		}
     		return retObj;
     	} catch(Exception x) {
