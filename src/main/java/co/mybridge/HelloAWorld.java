@@ -39,8 +39,8 @@ public class HelloAWorld extends HttpServlet {
         String industry = req.getParameter("industry");
         String profession = req.getParameter("profession");
         JSONObject pobj = new JSONObject();
-        pobj.append("person_id", email).append("email", email).append("password", password)
-             .append("industry", industry).append("profession", profession);
+        pobj.put("person_id", email).put("email", email).put("password", password)
+             .put("industry", industry).put("profession", profession);
         JSONArray ja = null;
         try {
         	DBUtils.addPerson(pobj);
