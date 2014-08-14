@@ -12,10 +12,10 @@ import javax.servlet.http.HttpServletResponse;
 import com.mongodb.DB;
 
 @WebServlet(
-        name = "MyBServlet",
-        urlPatterns = {"/b"}
+        name = "MBCollections",
+        urlPatterns = {"/api/collections"}
     )
-public class HelloBWorld extends HttpServlet {
+public class MBCollections extends HttpServlet {
 
     /**
 	 * 

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <style>
+    /* all */
+    ::-webkit-input-placeholder { color:#f00; }
+    ::-moz-placeholder { color:#f00; } /* firefox 19+ */
+    :-ms-input-placeholder { color:#f00; } /* ie */
+    input:-moz-placeholder { color:#f00; }
+  </style>
+</head>
+<body>
+<h1>Testing data entry</h1>
+<div id="sec1">
+<h2>Add a user</h2>
+<form enctype="application/json" action="/api/people" method="post">
+<table width="80%" border="0">
+<tr><td colspan="3"><h2><center>Register with your email</center></h2></td></tr>
+<tr><th> Email</th><th>Password</th><th>Name</th><th>Industry</th><th>Profession</th></tr>
+<tr><td align="center">
+<input type="text" name="email" size="20" placeholder="email"> </input>
+</td><td align="center">
+<input type="password" name="password" size="14" placeholder="password"> </input>
+</td>
+<td align="center">
+<input type="text" name="fullname" size="14" placeholder="Your Name"> </input>
+</td><td align="center">
+<select id="industry" name="industry">
+    <option value="Internet/Computer Software">Internet/Computer Software</option>
+</select>
+</td><td align="left">
+<input type="checkbox" name="profession" value="Startup">Start Up</input><br>
+<input type="checkbox" name="profession" value="CEO">CEO</input><br>
+<input type="checkbox" name="profession" value="Sales">Sales</input><br>
+<input type="checkbox" name="profession" value="Marketing">Marketing</input><br>
+<input type="checkbox" name="profession" value="Developer">Developer</input>
+</td></tr>
+<tr><td colspan="3" align="center"><input type="submit" value="Submit" name="submit"></td></tr>
+</table>
+</form>
+</div>
+<br>
+<div id="sec2">
+<h2>Add a collection</h2>
+
+</div>
+<br>
+</body></html>

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.bson.BasicBSONObject;
+import org.bson.types.ObjectId;
 import org.json.*;
 
 import com.mongodb.BasicDBList;
@@ -38,120 +39,42 @@ public class DBUtils {
 		return db;
 	}
 
-	/**
-	 * this method is to take a person JSONObject, and convert it to BasicDBObject
-	 * if email and password exist, then this is a registered user, otherwise, it's a leader object.
-	 * @param p 
-	 * @return  BasicDBObject to be saved into MongoDB, or return null if the JSONObject is not a person
-	 */
-    protected static BasicDBObject convertPersonToDBObject(JSONObject p) {
-    	BasicDBObject retObj = new BasicDBObject();
-    	try {
-    		if (p.has("_id")) {
-    			retObj.append("_id", p.get("_id"));
-    		}
-    		String pid = p.getString("person_id");
-    		String fname = p.getString("fullname");
-    		retObj.append("person_id", pid);
-    		retObj.append("fullname", fname);
-    		
-    		JSONArray ind = p.getJSONArray("industries"); 	
-    		ArrayList<String> indL = new ArrayList<String>();
-    		for (int i = 0; i< ind.length(); i++) {
-    			// verify string
-    			String x = ind.getString(i);
-    			indL.add(x);
-    		}
-    		retObj.append("industries", indL);
-    		
-    		JSONArray prof = p.getJSONArray("professions");
-    		ArrayList<String> profL = new ArrayList<String>();
-    		for (int j = 0; j< ind.length(); j++) {
-    			// verify string
-    			String x = prof.getString(j);
-    			profL.add(x);
-    		}
-    		retObj.append("professions", profL);
-    		
-    		if (p.has("email") && p.has("password")) {
-    			retObj.append("email", p.get("email"));
-    			retObj.append("password", p.get("password"));
-    		}
-    		return retObj;
-    	} catch(Exception x) {
-    		System.out.println("Failed to recognize a person JSONObject: " + x.getMessage());
-    		if (p != null) {
-    			System.out.println("JSONObject: " + p.toString(4));
-    		}
-    		return null;
-    	}
-    }
     /**
-     * Convert a person BasicDBObject to JSONObject. 
-     * @param p
-     * @return   JSONArray representing a person, or null in all other cases.
+     * generic retrieve method, with collection name and parameters
+     * 
+     * @param collname
+     * @param srchField
+     * @return  JSONArray with specified JSONObject
+     * @throws MongoException
+     * @throws UnknownHostException
      */
-    protected static JSONObject convertPersonToJSONObject(BasicDBObject p) {
-    	JSONObject retObj = new JSONObject();
-    	try {
-    		if (p.containsField("_id")) {
-    			retObj.put("_id", p.getString("_id"));
-    		}
-    		String pid = p.getString("person_id");
-    		String fname = p.getString("fullname");
-    		retObj.put("person_id", pid);
-    		retObj.put("fullname", fname);
-    		
-    		List<String> indL = (List<String>)p.get("industries"); 		
-    		for (String i : indL) {
-    			retObj.append("industries", i);
-    		}
-    		
-    		List<String> profL = (List<String>)p.get("professions");
-    		for (String r: profL) {
-    			retObj.append("professions", r);
-    		}
-    		
-    		if (p.containsField("email") && p.containsField("password")) {
-    			retObj.put("email", p.getString("email"));
-    			retObj.put("password", p.getString("password"));
-    		}
-    		return retObj;
-    	} catch(Exception x) {
-    		System.out.println("Failed to recognize a person from BasicDBObject: " + x.getMessage());
-    		if (p != null) {
-    			System.out.println("BasicDBObject: " + p.toString());
-    		}
-    		return null;
-    	}
-    }
-    
-    public static void addPerson(JSONObject p) throws MongoException, UnknownHostException  {
-    	BasicDBObject pobj = convertPersonToDBObject(p);
-    	if (pobj == null) {
-    		return;
-    	}
-    	try {
-    	DB  db = getMongoDB();
-    	DBCollection coll = db.getCollection("mb_person");
-    	coll.insert(pobj, WriteConcern.JOURNAL_SAFE);
-    	}
-    	catch(Exception x) {
-    		x.printStackTrace(System.out);
-    	}
-    }
-    
-    public static JSONArray retrieveObjects(String collname, String... srchField) throws MongoException, UnknownHostException {
-    	JSONArray retUsers = new JSONArray();
+    public static JSONArray retrieveObjects(String collname, MBConverter conv, String... srchField) throws MongoException, UnknownHostException {
+    	JSONArray retPeople = new JSONArray();
     	
     	DB  db = getMongoDB();
     	DBCollection coll = db.getCollection(collname);
-    	DBCursor dbC = coll.find();
+    	DBCursor dbC = null;
+    	if (srchField.length > 1) {
+    		BasicDBObject srchobj = new BasicDBObject();
+    		int l = srchField.length;
+    		for (int j = 0; j< l-1; j=j+2) {
+    			String f = srchField[j];
+    			String v = srchField[j+1];
+    			if (f.equalsIgnoreCase("_id")) {
+    				srchobj.put(f, new ObjectId(v));
+    			} else {
+    				srchobj.append(f, v);
+    			}
+    		}
+    		dbC = coll.find( srchobj );
+    	} else {
+    		dbC = coll.find();
+    	}
     	while (dbC.hasNext()) {
     		BasicDBObject dbo = (BasicDBObject)dbC.next();
-    		JSONObject u = convertPersonToJSONObject(dbo);
-    		retUsers.put(u);
+    		JSONObject jobj = conv.convertBasicDBToJSON(dbo);
+    		retPeople.put(jobj);
     	}
-    	return retUsers;
+    	return retPeople;
     }
 }
