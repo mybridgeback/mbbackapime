@@ -60,8 +60,10 @@ public class DBUtils {
     		for (int j = 0; j< l-1; j=j+2) {
     			String f = srchField[j];
     			String v = srchField[j+1];
-    			if (f.equalsIgnoreCase("_id")) {
+    			if (f.equalsIgnoreCase("_id") ) {
     				srchobj.put(f, new ObjectId(v));
+    			} else if ( f.equalsIgnoreCase("person_id") || f.equalsIgnoreCase("contents")){
+    				srchobj.put(f, v);
     			} else {
     				srchobj.append(f, v);
     			}

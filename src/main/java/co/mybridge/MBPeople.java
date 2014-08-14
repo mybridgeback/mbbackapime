@@ -39,7 +39,7 @@ public class MBPeople extends HttpServlet implements MBConverter {
         try {  
         	// check specific person id
     		String nextPath = req.getPathInfo();
-    		if (nextPath != null && nextPath.length() > 3) {
+    		if (nextPath != null && nextPath.length() > 5) {
     			// there is a person id in the path, use it
     			if (nextPath.startsWith("/")) {
     				nextPath = nextPath.substring(1);
