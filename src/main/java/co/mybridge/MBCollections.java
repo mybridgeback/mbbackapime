@@ -45,7 +45,7 @@ public class MBCollections extends HttpServlet implements MBConverter {
     				nextPath = nextPath.substring(0, nextPath.indexOf('/'));
     			}
     			System.out.println("Loading collection with _id=" + nextPath);
-    			ja = DBUtils.retrieveObjects("mb_collection", this, "_id", nextPath);
+    			ja = DBUtils.retrieveObjects(req, "mb_collection", this, "_id", nextPath);
     		} else {
     			// check query parameters
     			String person_id = req.getParameter("person_id");
@@ -53,9 +53,9 @@ public class MBCollections extends HttpServlet implements MBConverter {
     				String srchFields[] = new String[2];
     				srchFields[0] = "person_id";
     				srchFields[1] = person_id;
-    				ja = DBUtils.retrieveObjects("mb_collection", this, srchFields);
+    				ja = DBUtils.retrieveObjects(req, "mb_collection", this, srchFields);
     			} else {
-    				ja = DBUtils.retrieveObjects("mb_collection", this, "no");
+    				ja = DBUtils.retrieveObjects(req, "mb_collection", this, "no");
     			}
     		}
         	String outStr = ja.toString(4);

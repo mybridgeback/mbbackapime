@@ -48,7 +48,7 @@ public class MBPeople extends HttpServlet implements MBConverter {
     				nextPath = nextPath.substring(0, nextPath.indexOf('/'));
     			}
     			System.out.println("Loading person with _id=" + nextPath);
-    			ja = DBUtils.retrieveObjects("mb_person", this, "_id", nextPath);
+    			ja = DBUtils.retrieveObjects(req, "mb_person", this, "_id", nextPath);
     		} else {
     			// check query parameters
     			String industries[] = req.getParameterValues("industry");
@@ -73,9 +73,9 @@ public class MBPeople extends HttpServlet implements MBConverter {
 	    					s=s+2;
 	    				}
     				}
-    				ja = DBUtils.retrieveObjects("mb_person", this, srchFields);
+    				ja = DBUtils.retrieveObjects(req, "mb_person", this, srchFields);
     			} else {
-    				ja = DBUtils.retrieveObjects("mb_person", this, "no");
+    				ja = DBUtils.retrieveObjects(req, "mb_person", this, "no");
     			}
     		}
         	String outStr = ja.toString(4);
@@ -119,7 +119,7 @@ public class MBPeople extends HttpServlet implements MBConverter {
         	addPerson(pobj);
 
         	// retrieve all people
-        	JSONArray ja = DBUtils.retrieveObjects("mb_person", this, "no");
+        	JSONArray ja = DBUtils.retrieveObjects(req, "mb_person", this, "no");
         	String outStr = ja.toString(4);     	
         	resp.setContentType("application/json");
         	resp.setContentLength(outStr.length());

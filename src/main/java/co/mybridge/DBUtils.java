@@ -1,11 +1,14 @@
 package co.mybridge;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
@@ -48,7 +51,7 @@ public class DBUtils {
      * @throws MongoException
      * @throws UnknownHostException
      */
-    public static JSONArray retrieveObjects(String collname, MBConverter conv, String... srchField) throws MongoException, UnknownHostException {
+    public static JSONArray retrieveObjects(HttpServletRequest req, String collname, MBConverter conv, String... srchField) throws MongoException, UnknownHostException {
     	JSONArray retPeople = new JSONArray();
     	
     	DB  db = getMongoDB();
@@ -75,6 +78,24 @@ public class DBUtils {
     	while (dbC.hasNext()) {
     		BasicDBObject dbo = (BasicDBObject)dbC.next();
     		JSONObject jobj = conv.convertBasicDBToJSON(dbo);
+    		// add entityThumb when file exist
+    		if (jobj.has("_id")) {
+    			String objid = jobj.getString("_id");
+    			String filename = "/img/" + objid +".jpg";
+    			String filepath = req.getSession().getServletContext().getRealPath(filename);
+    			File tf = new File(filepath);
+    			if (tf.exists()) {
+    				String myhost = "http://" + req.getServerName();
+    				if (req.getServerPort() == 443) {
+    					myhost = "https://" + req.getServerName();
+    				} else if (req.getServerPort() != 80) {
+    					myhost = "http://" + req.getServerName() + ":" + req.getServerPort();
+    				}
+    				jobj.put("thumbImage", myhost + filename);
+    			} else {
+    				System.out.println("file " + filepath + " not exist!");
+    			}
+    		}
     		retPeople.put(jobj);
     	}
     	return retPeople;
