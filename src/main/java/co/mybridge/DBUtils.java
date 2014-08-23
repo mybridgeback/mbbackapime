@@ -112,50 +112,48 @@ public class DBUtils {
 	    		JSONObject jobj = conv.convertBasicDBToJSON(dbo);
 	    		// common code
 	    		// add entityThumb when file exist
-	    		if (jobj.has("_id")) {
-	    			if (jobj.has("thumbImage") && jobj.getString("thumbImage").length() > 4) {
-	    				copyImageDimensions(dbo, jobj);
-	    			} else {
-	    				// look for local file under /img/ directory
-	        			String objid = jobj.getString("_id");
-		    			String filename = "/img/" + objid +".jpg";
-		    			String filepath = req.getSession().getServletContext().getRealPath(filename);
-		    			File tf = new File(filepath);
-		    			if (tf.exists()) {
-		    				String myhost = "http://" + req.getServerName();
-		    				if (req.getServerPort() == 443) {
-		    					myhost = "https://" + req.getServerName();
-		    				} else if (req.getServerPort() != 80) {
-		    					myhost = "http://" + req.getServerName() + ":" + req.getServerPort();
+	    		if (dbo.containsField("thumbImage") && dbo.getString("thumbImage").length() > 4) {
+    				copyImageDimensions(dbo, jobj);
+    			} else if (jobj.has("_id")) {
+    				// look for local file under /img/ directory
+        			String objid = jobj.getString("_id");
+	    			String filename = "/img/" + objid +".jpg";
+	    			String filepath = req.getSession().getServletContext().getRealPath(filename);
+	    			File tf = new File(filepath);
+	    			if (tf.exists()) {
+	    				String myhost = "http://" + req.getServerName();
+	    				if (req.getServerPort() == 443) {
+	    					myhost = "https://" + req.getServerName();
+	    				} else if (req.getServerPort() != 80) {
+	    					myhost = "http://" + req.getServerName() + ":" + req.getServerPort();
+	    				}
+	    				jobj.put("thumbImage", myhost + filename);
+	    				
+						int _width = 0;
+						int _height = 0;
+						try {
+		    				InputStream stream = new FileInputStream(filepath);
+		    				ImageInfo info = new ImageInfo();
+		    				info.setInput(stream);
+		    				if (info.check() == false) {
+		    					System.out.println("Failed to check ImageInfo ");
+		    				} else if (info.getMimeType() == null) {
+		    					System.out.println("Invalid MIME type");
+		    				} else {
+		    					_width = info.getWidth();
+		    					_height = info.getHeight();
 		    				}
-		    				jobj.put("thumbImage", myhost + filename);
-		    				
-							int _width = 0;
-							int _height = 0;
-							try {
-			    				InputStream stream = new FileInputStream(filepath);
-			    				ImageInfo info = new ImageInfo();
-			    				info.setInput(stream);
-			    				if (info.check() == false) {
-			    					System.out.println("Failed to check ImageInfo ");
-			    				} else if (info.getMimeType() == null) {
-			    					System.out.println("Invalid MIME type");
-			    				} else {
-			    					_width = info.getWidth();
-			    					_height = info.getHeight();
-			    				}
-							}
-							catch (Exception e) {
-	    						System.out.println("Failed to inspect local image file dimensions for " + filepath + ": " + jobj.toString(4));
-	    						e.printStackTrace();
-	    					}
-		    				jobj.put("thumbWidth", _width);
-		    				jobj.put("thumbHeight", _height);
-		    				System.out.println("Successfully detected local image dimension for " 
-		    					      + filepath + " to be " + _width +"x" + _height);
-		    			} else {
-		    				System.out.println("file " + filepath + " not exist!");
-		    			}
+						}
+						catch (Exception e) {
+    						System.out.println("Failed to inspect local image file dimensions for " + filepath + ": " + jobj.toString(4));
+    						e.printStackTrace();
+    					}
+	    				jobj.put("thumbWidth", _width);
+	    				jobj.put("thumbHeight", _height);
+	    				System.out.println("Successfully detected local image dimension for " 
+	    					      + filepath + " to be " + _width +"x" + _height);
+	    			} else {
+	    				System.out.println("file " + filepath + " not exist!");
 	    			}
 	    		}
 	    		retObjects.put(jobj);
@@ -200,7 +198,8 @@ public class DBUtils {
 		return jobj;
     }
     
-    private static void copyImageDimensions(BasicDBObject dobj, JSONObject jobj) {
+    private static JSONObject copyImageDimensions(BasicDBObject dobj, JSONObject jobj) {
+    	jobj.put("thumbImage", dobj.getString("thumbImage"));
     	if (dobj.containsField("thumbWidth") && dobj.containsField("thumbHeight")) {
 			// already has thumb image in database
 			// done with thumb images
@@ -210,5 +209,6 @@ public class DBUtils {
 			// re-calculate dimensions on the fly
 			jobj = addThumbImageDimensionFromURL(jobj, jobj.getString("thumbImage"));
 		}
+    	return jobj;
     }
 }
