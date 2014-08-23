@@ -42,9 +42,9 @@ public class MBKnowledge extends HttpServlet implements MBConverter {
 					nextPath = nextPath.substring(0, nextPath.indexOf('/'));
 				}
 				System.out.println("Loading content with _id=" + nextPath);
-				ja = DBUtils.retrieveObjects(req, "mb_content", this, "_id", nextPath);
+				ja = DBUtils.retrieveObjects(req, "mb_knowledge", this, "_id", nextPath);
 			} else {
-				ja = DBUtils.retrieveObjects(req, "mb_content", this, "no");
+				ja = DBUtils.retrieveObjects(req, "mb_knowledge", this, "no");
 			}
         } catch(Exception e) {
         	System.out.println("Failed to load contents: " + e.getMessage());

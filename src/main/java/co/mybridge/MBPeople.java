@@ -147,18 +147,7 @@ public class MBPeople extends HttpServlet implements MBConverter {
     }
     
     private void addPerson(JSONObject p) throws MongoException, UnknownHostException  {
-    	BasicDBObject pobj = convertJSONToBasicDB(p);
-    	if (pobj == null) {
-    		return;
-    	}
-    	try {
-	    	DB  db = DBUtils.getMongoDB();
-	    	DBCollection coll = db.getCollection("mb_person");
-	    	coll.insert(pobj, WriteConcern.JOURNAL_SAFE);
-    	}
-    	catch(Exception x) {
-    		x.printStackTrace(System.out);
-    	}
+    	DBUtils.updateObject("mb_person", this, p);
     }
     
     /**
