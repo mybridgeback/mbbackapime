@@ -15,7 +15,7 @@
 <h2>Add a user</h2>
 <form enctype="application/json" action="/api/people" method="post">
 <table width="80%" border="0">
-<tr><td colspan="3"><h2><center>Register with your email</center></h2></td></tr>
+<tr><td colspan="4"><h2><center>Register with your email</center></h2></td></tr>
 <tr><th> Email</th><th>Password</th><th>Name</th><th>Industry</th><th>Profession</th></tr>
 <tr><td align="center">
 <input type="text" name="email" size="20" placeholder="email"> </input>
@@ -23,7 +23,7 @@
 <input type="password" name="password" size="14" placeholder="password"> </input>
 </td>
 <td align="center">
-<input type="text" name="fullname" size="14" placeholder="Your Name"> </input>
+<input type="text" name="fullName" size="14" placeholder="Your Name"> </input>
 </td><td align="center">
 <select id="industry" name="industry">
     <option value="Internet/Computer Software">Internet/Computer Software</option>
@@ -35,7 +35,12 @@
 <input type="checkbox" name="profession" value="Marketing">Marketing</input><br>
 <input type="checkbox" name="profession" value="Developer">Developer</input>
 </td></tr>
-<tr><td colspan="3" align="center"><input type="submit" value="Submit" name="submit"></td></tr>
+<tr><td align="left" colspan="4">&nbsp;&nbsp;&nbsp;<b>Profile image URL:</b> 
+<input type="text" name="thumbImage" size="45" placeholder="Enter Image URL here"></input>
+</td></tr>
+<tr><td colspan="2" >&nbsp;&nbsp;&nbsp;<b>Position:</b> <input type="text" size="20" name="position" placeholder="optional"></input></td>
+<td colspan="3" ><b>Company:</b> <input type="text" size="20" name="company" placeholder="optional"></input></td></tr>
+<tr><td colspan="5" align="center"><input type="submit" value="Submit" name="submit"></td></tr>
 </table>
 </form>
 </div>

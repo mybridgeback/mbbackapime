@@ -102,9 +102,9 @@ public class MBPeople extends HttpServlet implements MBConverter {
         String password = req.getParameter("password");
         String industry[] = req.getParameterValues("industry");
         String profession[] = req.getParameterValues("profession");
-        String fullname = req.getParameter("fullname");
+        String fullname = req.getParameter("fullName");
         JSONObject pobj = new JSONObject();    
-        pobj.put("fullname", fullname);
+        pobj.put("fullName", fullname);
         if (email != null && password != null) {
         	pobj.put("email", email).put("password", password);
         }
@@ -114,7 +114,20 @@ public class MBPeople extends HttpServlet implements MBConverter {
         for (int y=0; y<profession.length; y++) {
             pobj.append("professions", profession[y]);
         }
-
+        String thumbImage = req.getParameter("thumbImage");
+        if (thumbImage != null && thumbImage.length() > 4) {
+        	pobj.put("thumbImage", thumbImage);
+        	pobj = DBUtils.addThumbImageDimensionFromURL(pobj, thumbImage);
+        }
+        
+        String position = req.getParameter("position");
+        String company = req.getParameter("company");
+        if (position != null && position.length() > 1) {
+        	pobj.put("position", position);
+        }
+        if (company != null && company.length() > 1) {
+        	pobj.put("company", company);
+        }
         try {
         	addPerson(pobj);
 
@@ -133,7 +146,7 @@ public class MBPeople extends HttpServlet implements MBConverter {
         }
     }
     
-    public void addPerson(JSONObject p) throws MongoException, UnknownHostException  {
+    private void addPerson(JSONObject p) throws MongoException, UnknownHostException  {
     	BasicDBObject pobj = convertJSONToBasicDB(p);
     	if (pobj == null) {
     		return;
@@ -160,9 +173,15 @@ public class MBPeople extends HttpServlet implements MBConverter {
     		if (p.containsField("_id")) {
     			retObj.put("_id", p.getString("_id"));
     		}
-    		String fname = p.getString("fullname");
-    		retObj.put("fullname", fname);
+    		String fname = p.getString("fullName");
+    		retObj.put("fullName", fname);
     		
+    		if (p.containsField("position")) {
+    			retObj.put("position", p.getString("position"));
+    		}
+    		if (p.containsField("company")) {
+    			retObj.put("company", p.getString("company"));
+    		}
     		List<String> indL = (List<String>)p.get("industries"); 		
     		for (String i : indL) {
     			retObj.append("industries", i);
@@ -198,10 +217,17 @@ public class MBPeople extends HttpServlet implements MBConverter {
     	BasicDBObject retObj = new BasicDBObject();
     	try {
     		if (p.has("_id")) {
-    			retObj.append("_id", p.get("_id"));
+    			retObj.put("_id", p.get("_id"));
     		}
-    		String fname = p.getString("fullname");
-    		retObj.append("fullname", fname);
+    		String fname = p.getString("fullName");
+    		retObj.put("fullName", fname);
+    		
+    		if (p.has("position")) {
+    			retObj.put("position", p.getString("position"));
+    		}
+    		if (p.has("company")) {
+    			retObj.put("company", p.getString("company"));
+    		}
     		
     		JSONArray ind = p.getJSONArray("industries"); 	
     		ArrayList<String> indL = new ArrayList<String>();

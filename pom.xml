@@ -8,6 +8,7 @@
   <url>http://mbbackapime.herokuapp.com</url>
   <properties>
     <tomcat.version>7.0.34</tomcat.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
   <dependencies>
     <dependency>

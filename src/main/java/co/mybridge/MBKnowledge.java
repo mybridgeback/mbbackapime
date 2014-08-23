@@ -13,13 +13,12 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
 
 @WebServlet(
-        name = "MBContents",
-        urlPatterns = {"/api/contents/*"}
+        name = "MBKnoweledge",
+        urlPatterns = {"/api/knowledge/*"}
     )
-public class MBContents extends HttpServlet implements MBConverter {
+public class MBKnowledge extends HttpServlet implements MBConverter {
 
     /**
 	 * 
@@ -63,8 +62,8 @@ public class MBContents extends HttpServlet implements MBConverter {
 	 * The JSONObject for content is:
 	 *    { _id: ObjectID,
      *       title: String,
-     *       external_URL: String,
-     *       html_body: String,
+     *       externalURL: String,
+     *       htmlBody: String,
      *       width: number,
      *       height: number
      *    }
@@ -79,10 +78,10 @@ public class MBContents extends HttpServlet implements MBConverter {
 			retJ.put("title", bobj.getString("title"));
 			retJ.put("width", bobj.getInt("width"));
 			retJ.put("height", bobj.getInt("height"));
-			if (bobj.containsField("html_body")) {
-				retJ.put("html_body", bobj.getString("html_body"));
+			if (bobj.containsField("htmlBody")) {
+				retJ.put("htmlBody", bobj.getString("htmlBody"));
 			} else {
-				retJ.put("external_URL", bobj.getString("external_URL"));
+				retJ.put("externalURL", bobj.getString("externalURL"));
 			}
 			return retJ;
 		}
@@ -104,10 +103,10 @@ public class MBContents extends HttpServlet implements MBConverter {
 			retB.put("title", jobj.getString("title"));
 			retB.put("width", jobj.getInt("width"));
 			retB.put("height", jobj.getInt("height"));
-			if (jobj.has("html_body")) {
-				retB.put("html_body", jobj.getString("html_body"));
+			if (jobj.has("htmlBody")) {
+				retB.put("htmlBody", jobj.getString("htmlBody"));
 			} else {
-				retB.put("external_URL", jobj.getString("external_URL"));
+				retB.put("externalURL", jobj.getString("externalURL"));
 			}
 			return retB;
 		} catch(Exception e) {
