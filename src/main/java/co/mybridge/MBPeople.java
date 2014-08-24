@@ -36,19 +36,31 @@ public class MBPeople extends HttpServlet implements MBConverter {
             throws ServletException, IOException {
         ServletOutputStream out = resp.getOutputStream();
         JSONArray ja = null;
+        String outStr = null;
         try {  
         	// check specific person id
     		String nextPath = req.getPathInfo();
     		if (nextPath != null && nextPath.length() > 5) {
     			// there is a person id in the path, use it
+    			String _pid = nextPath;
     			if (nextPath.startsWith("/")) {
     				nextPath = nextPath.substring(1);
+    				_pid = nextPath;
     			}
     			if (nextPath.indexOf('/') > 0) {
-    				nextPath = nextPath.substring(0, nextPath.indexOf('/'));
+    				// there is personId and then something else
+    				_pid = nextPath.substring(0, nextPath.indexOf('/'));
+    				nextPath = nextPath.substring(nextPath.indexOf('/') + 1);
+    			} else {
+    				nextPath = "";
     			}
-    			System.out.println("Loading person with _id=" + nextPath);
-    			ja = DBUtils.retrieveObjects(req, "mb_person", this, "_id", nextPath);
+    			System.out.println("Loading person with _id=" + _pid);
+    			ja = DBUtils.retrieveObjects(req, "mb_person", this, "_id", _pid);
+    			if (nextPath.length() > 0 && ja.length() == 1) {
+    				System.out.println("The person exists, proceeds with next operations: ");
+    			}
+    			JSONObject oneObj = ja.getJSONObject(0);
+    			outStr = oneObj.toString(4);
     		} else {
     			// check query parameters
     			String industries[] = req.getParameterValues("industry");
@@ -77,8 +89,8 @@ public class MBPeople extends HttpServlet implements MBConverter {
     			} else {
     				ja = DBUtils.retrieveObjects(req, "mb_person", this, "no");
     			}
+    			outStr = ja.toString(4);
     		}
-        	String outStr = ja.toString(4);
         	
         	resp.setContentType("application/json");
         	resp.setContentLength(outStr.length());
@@ -98,56 +110,22 @@ public class MBPeople extends HttpServlet implements MBConverter {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         ServletOutputStream out = resp.getOutputStream();
-        String email = req.getParameter("email");
-        String password = req.getParameter("password");
-        String industry[] = req.getParameterValues("industry");
-        String profession[] = req.getParameterValues("profession");
-        String fullname = req.getParameter("fullName");
-        JSONObject pobj = new JSONObject();    
-        pobj.put("fullName", fullname);
-        if (email != null && password != null) {
-        	pobj.put("email", email).put("password", password);
-        }
-        for (int x=0; x<industry.length; x++) {
-            pobj.append("industries", industry[x]);
-        }
-        for (int y=0; y<profession.length; y++) {
-            pobj.append("professions", profession[y]);
-        }
-        String thumbImage = req.getParameter("thumbImage");
-        if (thumbImage != null && thumbImage.length() > 4) {
-        	pobj.put("thumbImage", thumbImage);
-        	pobj = DBUtils.addThumbImageDimensionFromURL(pobj, thumbImage);
-        }
-        
-        String position = req.getParameter("position");
-        String company = req.getParameter("company");
-        if (position != null && position.length() > 1) {
-        	pobj.put("position", position);
-        }
-        if (company != null && company.length() > 1) {
-        	pobj.put("company", company);
-        }
+        resp.setContentType("application/json");
         try {
-        	addPerson(pobj);
-
-        	// retrieve all people
-        	JSONArray ja = DBUtils.retrieveObjects(req, "mb_person", this, "no");
-        	String outStr = ja.toString(4);     	
-        	resp.setContentType("application/json");
-        	resp.setContentLength(outStr.length());
-        	out.write(outStr.getBytes());
+	        String newId = addPerson(req);
+	        if (newId.length() > 4) {
+	        	// retrieve this newly added person
+	        	JSONArray ja = DBUtils.retrieveObjects(req, "mb_person", this, "_id", newId);
+	        	JSONObject oneObj = ja.getJSONObject(0);
+	        	String outStr = oneObj.toString(4);     	
+	        	resp.setContentLength(outStr.length());
+	        	out.write(outStr.getBytes());
+	        	out.flush();
+	        } 
         }
-        catch(Exception x) {
-        	x.printStackTrace();
-        	out.write(("{ \"ERROR\": \"" + x.getMessage() + "\" }").getBytes());
-        	out.flush();
-        	out.close();
+        catch (Exception x) {
+        	resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Failed to create a user: " + x.getMessage());
         }
-    }
-    
-    private void addPerson(JSONObject p) throws MongoException, UnknownHostException  {
-    	DBUtils.updateObject("mb_person", this, p);
     }
     
     /**
@@ -249,5 +227,46 @@ public class MBPeople extends HttpServlet implements MBConverter {
     		return null;
     	}
 	}
+	
+	
+    private String addPerson(HttpServletRequest req) throws Exception {
+    	try {
+	        String email = req.getParameter("email");
+	        String password = req.getParameter("password");
+	        String industry[] = req.getParameterValues("industry");
+	        String profession[] = req.getParameterValues("profession");
+	        String fullname = req.getParameter("fullName");
+	        JSONObject pobj = new JSONObject();    
+	        pobj.put("fullName", fullname);
+	        if (email != null && password != null) {
+	        	pobj.put("email", email).put("password", password);
+	        }
+	        for (int x=0; x<industry.length; x++) {
+	            pobj.append("industries", industry[x]);
+	        }
+	        for (int y=0; y<profession.length; y++) {
+	            pobj.append("professions", profession[y]);
+	        }
+	        String thumbImage = req.getParameter("thumbImage");
+	        if (thumbImage != null && thumbImage.length() > 4) {
+	        	pobj.put("thumbImage", thumbImage);
+	        	pobj = DBUtils.addThumbImageDimensionFromURL(pobj, thumbImage);
+	        }
+	        
+	        String position = req.getParameter("position");
+	        String company = req.getParameter("company");
+	        if (position != null && position.length() > 1) {
+	        	pobj.put("position", position);
+	        }
+	        if (company != null && company.length() > 1) {
+	        	pobj.put("company", company);
+	        }
 
+        	return DBUtils.updateObject("mb_person", this, pobj);
+        }
+        catch(Exception x) {
+        	x.printStackTrace();
+        	throw x;
+        }
+    }
 }

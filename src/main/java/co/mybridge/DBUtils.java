@@ -45,10 +45,17 @@ public class DBUtils {
 		return mongoDB;
 	}
 
-	public static void updateObject(String collname, MBConverter conv, JSONObject jobj) {
+	/**
+	 * create or update a MongoDB document
+	 * @param collname
+	 * @param conv
+	 * @param jobj
+	 * @return  a string representing ObjectID upon successful update, or null if failed.
+	 */
+	public static String updateObject(String collname, MBConverter conv, JSONObject jobj) {
     	BasicDBObject pobj = conv.convertJSONToBasicDB(jobj);
     	if (pobj == null) {
-    		return;
+    		return null;
     	}
     	// add image info
     	if (jobj.has("thumbImage")) {
@@ -66,11 +73,14 @@ public class DBUtils {
 	    	DB  db = getMongoDB();
 	    	DBCollection coll = db.getCollection("mb_person");
 	    	coll.insert(pobj, WriteConcern.JOURNAL_SAFE);
+	    	ObjectId id = (ObjectId)pobj.get( "_id" );
+	    	return id.toString();
     	}
     	catch(Exception x) {
     		// set to recreate mongoDB connection
     		mongoDB = null;
     		x.printStackTrace(System.out);
+    		return null;
     	}
 	}
     /**
@@ -97,7 +107,7 @@ public class DBUtils {
 	    			String v = srchField[j+1];
 	    			if (f.equalsIgnoreCase("_id") ) {
 	    				srchobj.put(f, new ObjectId(v));
-	    			} else if ( f.equalsIgnoreCase("person_id") || f.equalsIgnoreCase("contents")){
+	    			} else if ( f.equalsIgnoreCase("person_id") || f.equalsIgnoreCase("knowledge")){
 	    				srchobj.put(f, v);
 	    			} else {
 	    				srchobj.append(f, v);
