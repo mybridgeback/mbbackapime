@@ -239,7 +239,9 @@ public class MBPeople extends HttpServlet implements MBConverter {
 	        JSONObject pobj = new JSONObject();    
 	        pobj.put("fullName", fullname);
 	        if (email != null && password != null) {
-	        	pobj.put("email", email).put("password", password);
+	        	// encrypt password here
+	        	String passwordHash = PasswordTool.generatePasswordHash(password);
+	        	pobj.put("email", email).put("password", passwordHash);
 	        }
 	        for (int x=0; x<industry.length; x++) {
 	            pobj.append("industries", industry[x]);
