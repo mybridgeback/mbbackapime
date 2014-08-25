@@ -29,28 +29,14 @@ public class MBKnowledge extends HttpServlet implements MBConverter {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         ServletOutputStream out = resp.getOutputStream();
-        JSONArray ja = null;
-        try {
-	        // check specific content id
-			String nextPath = req.getPathInfo();
-			if (nextPath != null && nextPath.length() > 5) {
-				// there is a content id in the path, use it
-				if (nextPath.startsWith("/")) {
-					nextPath = nextPath.substring(1);
-				}
-				if (nextPath.indexOf('/') > 0) {
-					nextPath = nextPath.substring(0, nextPath.indexOf('/'));
-				}
-				System.out.println("Loading content with _id=" + nextPath);
-				ja = DBUtils.retrieveObjects(req, "mb_knowledge", this, "_id", nextPath);
-			} else {
-				ja = DBUtils.retrieveObjects(req, "mb_knowledge", this, "no");
-			}
-        } catch(Exception e) {
-        	System.out.println("Failed to load contents: " + e.getMessage());
-        	e.printStackTrace();
-        }
-        String outStr = ja.toString(4);
+        String outStr = null;
+
+		String nextPath = req.getPathInfo();
+		outStr = getKnowledge(req, nextPath);
+
+		if (outStr == null) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Failed to get knowledge");
+		}
         resp.setContentType("application/json");
         resp.setContentLength(outStr.length());
         out.write(outStr.getBytes());
@@ -117,4 +103,34 @@ public class MBKnowledge extends HttpServlet implements MBConverter {
 		return null;
 	}
 
+	public String getKnowledge(HttpServletRequest req, String nextPath) {
+		JSONArray ja = null;
+        try {
+	        // check specific content id
+			if (nextPath != null && nextPath.length() > 5) {
+				// there is a content id in the path, use it
+				if (nextPath.startsWith("/")) {
+					nextPath = nextPath.substring(1);
+				}
+				if (nextPath.indexOf('/') > 0) {
+					nextPath = nextPath.substring(0, nextPath.indexOf('/'));
+				}
+				System.out.println("Loading content with _id=" + nextPath);
+				ja = DBUtils.retrieveObjects(req, "mb_knowledge", this, "_id", nextPath);
+				if (ja.length() == 1) {
+					JSONObject oneObj = ja.getJSONObject(0);
+					return oneObj.toString(4);
+				} else {
+					return null;
+				}
+			} else {
+				ja = DBUtils.retrieveObjects(req, "mb_knowledge", this, "no");
+				return ja.toString(4);
+			}
+        } catch(Exception e) {
+        	System.out.println("Failed to load contents: " + e.getMessage());
+        	e.printStackTrace();
+        	return null;
+        }
+	}
 }

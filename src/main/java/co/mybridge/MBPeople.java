@@ -39,59 +39,61 @@ public class MBPeople extends HttpServlet implements MBConverter {
         String outStr = null;
         try {  
         	// check specific person id
-    		String nextPath = req.getPathInfo();
-    		if (nextPath != null && nextPath.length() > 5) {
-    			// there is a person id in the path, use it
-    			String _pid = nextPath;
-    			if (nextPath.startsWith("/")) {
-    				nextPath = nextPath.substring(1);
-    				_pid = nextPath;
-    			}
-    			if (nextPath.indexOf('/') > 0) {
-    				// there is personId and then something else
-    				_pid = nextPath.substring(0, nextPath.indexOf('/'));
-    				nextPath = nextPath.substring(nextPath.indexOf('/') + 1);
-    			} else {
-    				nextPath = "";
-    			}
-    			System.out.println("Loading person with _id=" + _pid);
-    			ja = DBUtils.retrieveObjects(req, "mb_person", this, "_id", _pid);
-    			if (nextPath.length() > 0 && ja.length() == 1) {
-    				System.out.println("The person exists, proceeds with next operations: ");
-    			}
-    			JSONObject oneObj = ja.getJSONObject(0);
-    			outStr = oneObj.toString(4);
-    		} else {
-    			// check query parameters
-    			String industries[] = req.getParameterValues("industry");
-    			String professions[] = req.getParameterValues("profession");
-    			if ((industries != null && industries.length > 0) || 
-    					(professions != null && professions.length > 0)) {
-    				// add parameters
-    				int totalFields = (((industries!=null)?industries.length:0) + ((professions!=null)?professions.length:0) ) * 2;
-    				String srchFields[] = new String[totalFields];
-    				int s = 0;
-    				if (industries != null) {
-	    				for (int x = 0; x < industries.length ; x++) {
-	    					srchFields[s] = "industries";
-	    					srchFields[s+1] = industries[x];
-	    					s=s+2;
-	    				}
-    				}
-    				if (professions != null) {
-	    				for (int y = 0; y < professions.length ; y++) {
-	    					srchFields[s] = "professions";
-	    					srchFields[s+1] = professions[y];
-	    					s=s+2;
-	    				}
-    				}
-    				ja = DBUtils.retrieveObjects(req, "mb_person", this, srchFields);
-    			} else {
-    				ja = DBUtils.retrieveObjects(req, "mb_person", this, "no");
-    			}
-    			outStr = ja.toString(4);
-    		}
-        	
+        	JSONObject requestJSON = determineRequestDispatcher(req);
+        	if (requestJSON == null) {
+        		resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Failed to process request");
+        	}
+            if (requestJSON.getString("type").equals("people")) {
+            	if (requestJSON.has("personOBJ")) {
+            		outStr = requestJSON.getJSONObject("personOBJ").toString(4);
+            	} else {
+            		// check query parameters
+        			String industries[] = req.getParameterValues("industry");
+        			String professions[] = req.getParameterValues("profession");
+        			if ((industries != null && industries.length > 0) || 
+        					(professions != null && professions.length > 0)) {
+        				// add parameters
+        				int totalFields = (((industries!=null)?industries.length:0) + ((professions!=null)?professions.length:0) ) * 2;
+        				String srchFields[] = new String[totalFields];
+        				int s = 0;
+        				if (industries != null) {
+    	    				for (int x = 0; x < industries.length ; x++) {
+    	    					srchFields[s] = "industries";
+    	    					srchFields[s+1] = industries[x];
+    	    					s=s+2;
+    	    				}
+        				}
+        				if (professions != null) {
+    	    				for (int y = 0; y < professions.length ; y++) {
+    	    					srchFields[s] = "professions";
+    	    					srchFields[s+1] = professions[y];
+    	    					s=s+2;
+    	    				}
+        				}
+        				ja = DBUtils.retrieveObjects(req, "mb_person", this, srchFields);
+        			} else {
+        				ja = DBUtils.retrieveObjects(req, "mb_person", this, "no");
+        			}
+        			outStr = ja.toString(4);
+            	}
+            } else if (requestJSON.getString("type").equals("collections")) {
+            	String nextPath = "";
+            	if (requestJSON.has("nextPath")) {
+            		nextPath = requestJSON.getString("nextPath");
+            	}
+            	MBCollections mbColl = new MBCollections();
+            	outStr = mbColl.getCollections(req, nextPath);
+            } else if (requestJSON.getString("type").equals("knowledge")) {
+            	String nextPath = "";
+            	if (requestJSON.has("nextPath")) {
+            		nextPath = requestJSON.getString("nextPath");
+            	}
+            	MBKnowledge mbColl = new MBKnowledge();
+            	outStr = mbColl.getKnowledge(req, nextPath);
+            }
+        	if (outStr == null) {
+        		resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Failed to get content by ID");
+        	}
         	resp.setContentType("application/json");
         	resp.setContentLength(outStr.length());
         	out.write(outStr.getBytes());
@@ -112,16 +114,22 @@ public class MBPeople extends HttpServlet implements MBConverter {
         ServletOutputStream out = resp.getOutputStream();
         resp.setContentType("application/json");
         try {
-	        String newId = addPerson(req);
-	        if (newId.length() > 4) {
-	        	// retrieve this newly added person
-	        	JSONArray ja = DBUtils.retrieveObjects(req, "mb_person", this, "_id", newId);
-	        	JSONObject oneObj = ja.getJSONObject(0);
-	        	String outStr = oneObj.toString(4);     	
-	        	resp.setContentLength(outStr.length());
-	        	out.write(outStr.getBytes());
-	        	out.flush();
-	        } 
+        	JSONObject requestOBJ = determineRequestDispatcher(req);
+        	if ("people".equals(requestOBJ.getString("type"))) {
+		        String newId = addPerson(req);
+		        if (newId.length() > 4) {
+		        	// retrieve this newly added person
+		        	JSONArray ja = DBUtils.retrieveObjects(req, "mb_person", this, "_id", newId);
+		        	JSONObject oneObj = ja.getJSONObject(0);
+		        	String outStr = oneObj.toString(4);     	
+		        	resp.setContentLength(outStr.length());
+		        	out.write(outStr.getBytes());
+		        	out.flush();
+		        } 
+        	} else if ("collections".equals(requestOBJ.getString("type"))) {
+        		MBCollections mbColl = new MBCollections();
+        		// mbColl.addCollection(HttpServletRequest req, JSONObject personObj);
+        	}
         }
         catch (Exception x) {
         	resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Failed to create a user: " + x.getMessage());
@@ -270,5 +278,103 @@ public class MBPeople extends HttpServlet implements MBConverter {
         	x.printStackTrace();
         	throw x;
         }
+    }
+    
+    /**
+     * This will get request of /api/people/....
+     * and figure out what further request this is, the possible requests are:
+     *  /api/people                          -- query people
+     *  /api/people/<personId> 
+     *  /api/people/<personId>/collections   -- to query or (with POST parameters) update a person's collection
+     *  /api/people/<personId>/collections/<collectionId>
+     *  /api/people/<personId>/collections/<collectionId>/knowledge
+     * 
+     *  
+     * @param req
+     * @return    a JSONObject in the form of 
+     *       <code>{  "type": "people"|"collections"|knowledge",
+     *                "personOBJ" :      -- a JSONObject for this person
+     *                "collectionOBJ":   -- a JSONObject for a collection
+     *                "knwoledgeOBJ":    -- a JSONObject for knowledge
+     *                "nextPath":
+     *             }</code>
+     * @throws UnknownHostException 
+     *             
+     */
+    private JSONObject determineRequestDispatcher(HttpServletRequest req) throws UnknownHostException {
+		JSONObject retO = new JSONObject();
+		
+    	// check specific person id
+    	// we are already in "/api/people/"
+		String nextPath = req.getPathInfo();
+		if (nextPath != null && nextPath.length() > 5) {
+			JSONArray ja = null;
+			
+			// there is a person id in the path, use it
+			String _pid = nextPath;
+			if (nextPath.startsWith("/")) {
+				nextPath = nextPath.substring(1);
+				_pid = nextPath;
+			}
+			if (nextPath.indexOf('/') > 0) {
+				// there is personId and then something else
+				_pid = nextPath.substring(0, nextPath.indexOf('/'));
+				nextPath = nextPath.substring(nextPath.indexOf('/') + 1); // nextPath is something AFTER personId
+			} else {
+				nextPath = "";
+			}
+			System.out.println("Loading person with _id=" + _pid);
+			try {
+				ja = DBUtils.retrieveObjects(req, "mb_person", this, "_id", _pid);
+				if (ja.length() != 1) {
+					System.out.println("Invalid personId.");
+					return null;
+				}
+			} catch(Exception x) {
+				System.out.println("Failed to access MongoDB with personId" + x.getMessage());
+				return null;
+			}
+			
+			// valid personId
+			retO.put("personOBJ", ja.getJSONObject(0));
+			if (nextPath.length() > 2) {
+				if (nextPath.matches("collections/[a-zA-Z_0-9]+")) {
+					// get collection object
+					String collId = nextPath.substring(12);
+					int nextSlash = collId.indexOf("/");
+					if (nextSlash > 1) {
+						collId = collId.substring(0, nextSlash);
+					}
+					MBCollections mbcoll = new MBCollections();
+					String collStr = mbcoll.getCollections(req, collId);
+					JSONObject collOBJ = new JSONObject(collStr);
+					retO.put("collectionOBJ", collOBJ);
+					
+					if (nextPath.matches("collections/[a-zA-Z_0-9]+/knowledge")) {
+						retO.put("type", "knowledge");
+						int kpos = nextPath.indexOf("knowledge") + 10;
+						if (nextPath.length() > kpos) {
+							retO.put("nextPath", nextPath.substring(kpos));
+						} else {
+							retO.put("nextPath", "");
+						}
+					} else {
+						retO.put("type", "collections");
+						retO.put("nextPath", nextPath.substring(12));
+					}
+				} else if (nextPath.startsWith("collections")){
+					retO.put("type", "collections");
+					retO.put("nextPath", "");
+				}
+				
+			} else {
+				retO.put("type", "people");
+			}
+		} else {
+			// /api/people/ request, without personId
+			retO = new JSONObject();
+			retO.put("type", "people");
+		}
+		return retO;
     }
 }

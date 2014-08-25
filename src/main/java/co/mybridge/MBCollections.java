@@ -1,6 +1,7 @@
 package co.mybridge;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,33 +34,10 @@ public class MBCollections extends HttpServlet implements MBConverter {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         ServletOutputStream out = resp.getOutputStream();
-        JSONArray ja = null;
         try {  
         	// check specific collection id
     		String nextPath = req.getPathInfo();
-    		if (nextPath != null && nextPath.length() > 5) {
-    			// there is a collection id in the path, use it
-    			if (nextPath.startsWith("/")) {
-    				nextPath = nextPath.substring(1);
-    			}
-    			if (nextPath.indexOf('/') > 0) {
-    				nextPath = nextPath.substring(0, nextPath.indexOf('/'));
-    			}
-    			System.out.println("Loading collection with _id=" + nextPath);
-    			ja = DBUtils.retrieveObjects(req, "mb_collection", this, "_id", nextPath);
-    		} else {
-    			// check query parameters
-    			String person_id = req.getParameter("personId");
-    			if (person_id != null && person_id.length() > 5) {
-    				String srchFields[] = new String[2];
-    				srchFields[0] = "personId";
-    				srchFields[1] = person_id;
-    				ja = DBUtils.retrieveObjects(req, "mb_collection", this, srchFields);
-    			} else {
-    				ja = DBUtils.retrieveObjects(req, "mb_collection", this, "no");
-    			}
-    		}
-        	String outStr = ja.toString(4);
+    		String outStr = getCollections(req, nextPath);
         	
         	resp.setContentType("application/json");
         	resp.setContentLength(outStr.length());
@@ -151,5 +129,38 @@ public class MBCollections extends HttpServlet implements MBConverter {
 		}
 		return null;
 	}
-
+	
+	public String getCollections(HttpServletRequest req, String nextPath) throws UnknownHostException {
+		JSONArray ja = null;
+		String outStr = null;
+		if (nextPath != null && nextPath.length() > 5) {
+			// there is a collection id in the path, use it
+			if (nextPath.startsWith("/")) {
+				nextPath = nextPath.substring(1);
+			}
+			if (nextPath.indexOf('/') > 0) {
+				nextPath = nextPath.substring(0, nextPath.indexOf('/'));
+			}
+			System.out.println("Loading collection with _id=" + nextPath);
+			ja = DBUtils.retrieveObjects(req, "mb_collection", this, "_id", nextPath);
+			if (ja.length() != 1) {
+				return null;
+			}
+			JSONObject oneObj = ja.getJSONObject(0);
+			outStr = oneObj.toString(4);
+		} else {
+			// check query parameters
+			String person_id = req.getParameter("personId");
+			if (person_id != null && person_id.length() > 5) {
+				String srchFields[] = new String[2];
+				srchFields[0] = "personId";
+				srchFields[1] = person_id;
+				ja = DBUtils.retrieveObjects(req, "mb_collection", this, srchFields);
+			} else {
+				ja = DBUtils.retrieveObjects(req, "mb_collection", this, "no");
+			}
+			outStr = ja.toString(4);
+		}
+    	return outStr;
+	}
 }
