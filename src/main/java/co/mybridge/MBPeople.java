@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.bson.types.ObjectId;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -45,9 +46,11 @@ public class MBPeople extends HttpServlet implements MBConverter {
         	}
             if (requestJSON.getString("type").equals("people")) {
             	if (requestJSON.has("personOBJ")) {
+            		// already has personID and retrieved from determineRequestDispatcher
+            		// return this person info
             		outStr = requestJSON.getJSONObject("personOBJ").toString(4);
             	} else {
-            		// check query parameters
+            		// no personID, check query parameters and run query
         			String industries[] = req.getParameterValues("industry");
         			String professions[] = req.getParameterValues("profession");
         			if ((industries != null && industries.length > 0) || 
@@ -77,19 +80,25 @@ public class MBPeople extends HttpServlet implements MBConverter {
         			outStr = ja.toString(4);
             	}
             } else if (requestJSON.getString("type").equals("collections")) {
-            	String nextPath = "";
-            	if (requestJSON.has("nextPath")) {
-            		nextPath = requestJSON.getString("nextPath");
+            	if (requestJSON.has("collectionOBJ")) {
+            		outStr = requestJSON.getJSONObject("collectionOBJ").toString(4);
+            	} else {
+            		// retrieve all collections for this person
+            		MBCollections mbColl = new MBCollections();
+            		String person_id = requestJSON.getJSONObject("personOBJ").getString("_id");
+        			String srchFields[] = new String[2];
+        			srchFields[0] = "personId";
+        			srchFields[1] = person_id;
+        			ja = DBUtils.retrieveObjects(req, "mb_collection", mbColl, srchFields);
+        			outStr = ja.toString(4);
             	}
-            	MBCollections mbColl = new MBCollections();
-            	outStr = mbColl.getCollections(req, nextPath);
             } else if (requestJSON.getString("type").equals("knowledge")) {
             	String nextPath = "";
             	if (requestJSON.has("nextPath")) {
             		nextPath = requestJSON.getString("nextPath");
             	}
-            	MBKnowledge mbColl = new MBKnowledge();
-            	outStr = mbColl.getKnowledge(req, nextPath);
+            	MBKnowledge mbKnowl = new MBKnowledge();
+            	outStr = mbKnowl.getKnowledge(req, nextPath);
             }
         	if (outStr == null) {
         		resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Failed to get content by ID");
@@ -101,8 +110,7 @@ public class MBPeople extends HttpServlet implements MBConverter {
         catch(Exception x) {       	
         	System.out.println("Exception: " + x.getMessage());
         	x.printStackTrace();
-        	
-        	out.write(("{ \"ERROR\": \"" + x.getMessage() + "\" }").getBytes());
+        	resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Failed to retrieve data");
         }
         out.flush();
         out.close();
@@ -116,7 +124,11 @@ public class MBPeople extends HttpServlet implements MBConverter {
         try {
         	JSONObject requestOBJ = determineRequestDispatcher(req);
         	if ("people".equals(requestOBJ.getString("type"))) {
-		        String newId = addPerson(req);
+        		String pid = null;
+        		if (requestOBJ.has("personOBJ")) {
+        			pid = requestOBJ.getJSONObject("personOBJ").getString("_id");
+        		}
+		        String newId = updatePerson(req, pid);
 		        if (newId.length() > 4) {
 		        	// retrieve this newly added person
 		        	JSONArray ja = DBUtils.retrieveObjects(req, "mb_person", this, "_id", newId);
@@ -127,8 +139,14 @@ public class MBPeople extends HttpServlet implements MBConverter {
 		        	out.flush();
 		        } 
         	} else if ("collections".equals(requestOBJ.getString("type"))) {
+        		String personId = requestOBJ.getJSONObject("personOBJ").getString("_id");
+        		//
+        		// create a new collection for this person based on request parameters
         		MBCollections mbColl = new MBCollections();
-        		// mbColl.addCollection(HttpServletRequest req, JSONObject personObj);
+        		String collId = mbColl.addCollection(req, personId);
+        		System.out.println("Successfully inserted a collection, with assigned ID=" + collId);
+        	} else if ("knowledge".equals(requestOBJ.getString("type"))) {
+        		// later
         	}
         }
         catch (Exception x) {
@@ -192,7 +210,9 @@ public class MBPeople extends HttpServlet implements MBConverter {
     	BasicDBObject retObj = new BasicDBObject();
     	try {
     		if (p.has("_id")) {
-    			retObj.put("_id", p.get("_id"));
+    			ObjectId oid = new ObjectId(p.getString("_id"));
+    			retObj.put("_id", oid);
+    			System.out.println("set OID=" + oid.toString());
     		}
     		String fname = p.getString("fullName");
     		retObj.put("fullName", fname);
@@ -236,43 +256,53 @@ public class MBPeople extends HttpServlet implements MBConverter {
     	}
 	}
 	
-	
-    private String addPerson(HttpServletRequest req) throws Exception {
+	/**
+	 * this method updates or add a person record, depending on whether there is presonId
+	 * @param req
+	 * @param personId
+	 * @return
+	 * @throws Exception
+	 */
+    private String updatePerson(HttpServletRequest req, String personId) throws Exception {
     	try {
 	        String email = req.getParameter("email");
 	        String password = req.getParameter("password");
 	        String industry[] = req.getParameterValues("industry");
 	        String profession[] = req.getParameterValues("profession");
 	        String fullname = req.getParameter("fullName");
-	        JSONObject pobj = new JSONObject();    
-	        pobj.put("fullName", fullname);
+	        JSONObject jobj = new JSONObject(); 
+	        if (personId != null && personId.length() > 4) {
+	        	System.out.println("has ID " + personId);
+	        	jobj.put("_id", personId);
+	        }
+	        jobj.put("fullName", fullname);
 	        if (email != null && password != null) {
 	        	// encrypt password here
 	        	String passwordHash = PasswordTool.generatePasswordHash(password);
-	        	pobj.put("email", email).put("password", passwordHash);
+	        	jobj.put("email", email).put("password", passwordHash);
 	        }
 	        for (int x=0; x<industry.length; x++) {
-	            pobj.append("industries", industry[x]);
+	            jobj.append("industries", industry[x]);
 	        }
 	        for (int y=0; y<profession.length; y++) {
-	            pobj.append("professions", profession[y]);
+	            jobj.append("professions", profession[y]);
 	        }
 	        String thumbImage = req.getParameter("thumbImage");
 	        if (thumbImage != null && thumbImage.length() > 4) {
-	        	pobj.put("thumbImage", thumbImage);
-	        	pobj = DBUtils.addThumbImageDimensionFromURL(pobj, thumbImage);
+	        	jobj.put("thumbImage", thumbImage);
+	        	jobj = DBUtils.addThumbImageDimensionFromURL(jobj, thumbImage);
 	        }
 	        
 	        String position = req.getParameter("position");
 	        String company = req.getParameter("company");
 	        if (position != null && position.length() > 1) {
-	        	pobj.put("position", position);
+	        	jobj.put("position", position);
 	        }
 	        if (company != null && company.length() > 1) {
-	        	pobj.put("company", company);
+	        	jobj.put("company", company);
 	        }
 
-        	return DBUtils.updateObject("mb_person", this, pobj);
+        	return DBUtils.updateObject("mb_person", this, jobj);
         }
         catch(Exception x) {
         	x.printStackTrace();
@@ -289,14 +319,13 @@ public class MBPeople extends HttpServlet implements MBConverter {
      *  /api/people/<personId>/collections/<collectionId>
      *  /api/people/<personId>/collections/<collectionId>/knowledge
      * 
-     *  
      * @param req
      * @return    a JSONObject in the form of 
-     *       <code>{  "type": "people"|"collections"|knowledge",
+     *       <code>{  "type": "people"|"collections"|"knowledge",
      *                "personOBJ" :      -- a JSONObject for this person
      *                "collectionOBJ":   -- a JSONObject for a collection
      *                "knwoledgeOBJ":    -- a JSONObject for knowledge
-     *                "nextPath":
+     *                "nextPath":  the remaining path after /knowledge/
      *             }</code>
      * @throws UnknownHostException 
      *             
@@ -307,62 +336,78 @@ public class MBPeople extends HttpServlet implements MBConverter {
     	// check specific person id
     	// we are already in "/api/people/"
 		String nextPath = req.getPathInfo();
+		
 		if (nextPath != null && nextPath.length() > 5) {
-			JSONArray ja = null;
-			
 			// there is a person id in the path, use it
-			String _pid = nextPath;
 			if (nextPath.startsWith("/")) {
 				nextPath = nextPath.substring(1);
-				_pid = nextPath;
 			}
+			
+			String _pid = nextPath;
 			if (nextPath.indexOf('/') > 0) {
 				// there is personId and then something else
+				// get personId upto /
 				_pid = nextPath.substring(0, nextPath.indexOf('/'));
-				nextPath = nextPath.substring(nextPath.indexOf('/') + 1); // nextPath is something AFTER personId
+				// nextPath is after personId, including /, would be / only
+				nextPath = nextPath.substring(nextPath.indexOf('/'));
+				if (nextPath.equals("/") || nextPath.length() < 3) {
+					// no meaningful path
+					nextPath = "";
+				} 
 			} else {
 				nextPath = "";
 			}
 			System.out.println("Loading person with _id=" + _pid);
 			try {
-				ja = DBUtils.retrieveObjects(req, "mb_person", this, "_id", _pid);
+				JSONArray ja = DBUtils.retrieveObjects(req, "mb_person", this, "_id", _pid);
 				if (ja.length() != 1) {
 					System.out.println("Invalid personId.");
 					return null;
 				}
+				retO.put("personOBJ", ja.getJSONObject(0));
 			} catch(Exception x) {
 				System.out.println("Failed to access MongoDB with personId" + x.getMessage());
 				return null;
 			}
-			
-			// valid personId
-			retO.put("personOBJ", ja.getJSONObject(0));
-			if (nextPath.length() > 2) {
-				if (nextPath.matches("collections/[a-zA-Z_0-9]+")) {
+
+			// now check for /collections/
+			if (nextPath.length() > 2 && nextPath.startsWith("collections")) {
+				if (nextPath.matches("collections/[a-zA-Z_0-9]+.*")) {
 					// get collection object
 					String collId = nextPath.substring(12);
 					int nextSlash = collId.indexOf("/");
 					if (nextSlash > 1) {
 						collId = collId.substring(0, nextSlash);
+						// set nextPath to be a sub string after collectionId, including slash
+						nextPath = collId.substring(nextSlash);
+						if (nextPath.length() > 5) {
+							if (nextPath.startsWith("/")) {
+								nextPath = nextPath.substring(1);
+							}
+						} else {
+							nextPath = "";
+						}
+					} else {
+						nextPath = "";
 					}
 					MBCollections mbcoll = new MBCollections();
 					String collStr = mbcoll.getCollections(req, collId);
 					JSONObject collOBJ = new JSONObject(collStr);
 					retO.put("collectionOBJ", collOBJ);
 					
-					if (nextPath.matches("collections/[a-zA-Z_0-9]+/knowledge")) {
+					if (nextPath.startsWith("knowledge")) {
 						retO.put("type", "knowledge");
-						int kpos = nextPath.indexOf("knowledge") + 10;
-						if (nextPath.length() > kpos) {
-							retO.put("nextPath", nextPath.substring(kpos));
+						if (nextPath.matches("knowledge/[a-zA-Z_0-9]+.*")) {
+							retO.put("nextPath", nextPath.substring(10));
 						} else {
 							retO.put("nextPath", "");
 						}
 					} else {
 						retO.put("type", "collections");
-						retO.put("nextPath", nextPath.substring(12));
+						retO.put("nextPath", nextPath);
 					}
 				} else if (nextPath.startsWith("collections")){
+					// collections, but no collectionId
 					retO.put("type", "collections");
 					retO.put("nextPath", "");
 				}
@@ -372,7 +417,6 @@ public class MBPeople extends HttpServlet implements MBConverter {
 			}
 		} else {
 			// /api/people/ request, without personId
-			retO = new JSONObject();
 			retO.put("type", "people");
 		}
 		return retO;

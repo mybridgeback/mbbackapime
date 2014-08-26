@@ -70,9 +70,12 @@ public class MBCollections extends HttpServlet implements MBConverter {
 			}
 			retJ.put("personId", bobj.getString("personId"));
 			retJ.put("collectionTitle", bobj.getString("collectionTitle"));
-		    BasicDBList dblist = (BasicDBList)bobj.get("knowledge"); 
+		    BasicDBList dblist = null;
+		    if (bobj.containsField("knowledge")) {
+		        dblist = (BasicDBList)bobj.get("knowledge"); 
+		    }
+		    JSONArray ja = new JSONArray();
 		    if (dblist != null && dblist.size() > 0) {
-		    	JSONArray ja = new JSONArray();
 		    	for (Object ob: dblist) {
 		    		BasicDBObject bob = (BasicDBObject) ob;
 		    		JSONObject job = new JSONObject();
@@ -84,8 +87,8 @@ public class MBCollections extends HttpServlet implements MBConverter {
 		    			System.out.println("Invalid db object for knowledge: " + bob.toString());
 		    		}
 		    	}
-		    	retJ.put("knowledge", ja);
 		    }
+		    retJ.put("knowledge", ja);
 			return retJ;
 		} catch(Exception x) {
 			System.out.println("Failed to convert BasicDBObject to JSON: " + x.getMessage());
@@ -163,4 +166,21 @@ public class MBCollections extends HttpServlet implements MBConverter {
 		}
     	return outStr;
 	}
+	
+    public String addCollection(HttpServletRequest req, String personId) throws Exception {
+    	try {
+	        String collTitle = req.getParameter("collectionTitle");
+	        JSONObject jobj = new JSONObject();    
+	        jobj.put("personId", personId);
+	        jobj.put("collectionTitle", collTitle);
+            // insert empty array
+	        JSONArray ja = new JSONArray();
+	        jobj.put("knowledge", ja);
+        	return DBUtils.updateObject("mb_collection", this, jobj);
+        }
+        catch(Exception x) {
+        	x.printStackTrace();
+        	throw x;
+        }
+    }
 }

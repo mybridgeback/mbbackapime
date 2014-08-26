@@ -71,8 +71,21 @@ public class DBUtils {
     	}
     	try {
 	    	DB  db = getMongoDB();
-	    	DBCollection coll = db.getCollection("mb_person");
-	    	coll.insert(pobj, WriteConcern.JOURNAL_SAFE);
+	    	DBCollection coll = db.getCollection(collname);
+	    	if (pobj.containsField("_id")) {
+	    		// it is an update
+	    		System.out.println("It's a update");
+	    		BasicDBObject locateIt = new BasicDBObject();
+	    		locateIt.put( "_id", pobj.getObjectId("_id") );
+	    		
+	    		BasicDBObject update = new BasicDBObject();
+	    		update.put( "$set", pobj);
+
+	    		System.out.println("what is basic DB: " + pobj.toString());
+	    		coll.update( locateIt, pobj );
+	    	} else {
+	    		coll.insert(pobj, WriteConcern.JOURNAL_SAFE);
+	    	}
 	    	ObjectId id = (ObjectId)pobj.get( "_id" );
 	    	return id.toString();
     	}

@@ -8,14 +8,31 @@
     :-ms-input-placeholder { color:#f00; } /* ie */
     input:-moz-placeholder { color:#f00; }
   </style>
+  <script language="JavaScript">
+  function autoJSSubmit() {
+      document.getElementById("submit").disabled = true;
+      var pid = document.getElementById("personId").value;
+      if (pid.length > 5) {
+          document.personform.action="/api/people/" + pid;
+      }
+      document.getElementById("submit").submit();
+  }
+  </script>
 </head>
 <body>
 <h1>Testing data entry</h1>
 <div id="sec1">
 <h2>Add a user</h2>
-<form enctype="application/json" action="/api/people" method="post">
+<form name="personform" id="personform" action="/api/people" method="post">
 <table width="80%" border="0">
-<tr><td colspan="4"><h2><center>Register with your email</center></h2></td></tr>
+<tr><td colspan="4"><h2><center>
+<select name="personId" id="personId">
+<option value="">Register with your email</option>
+<option value="53ec190bb760c1ed8c2afe5e">Update Bill Gates</option>
+<option value="53ec1946b760c1ed8c2afe5f">Update Paul Allen</option
+</select>
+</center></h2></td></tr>
+
 <tr><th> Email</th><th>Password</th><th>Name</th><th>Industry</th><th>Profession</th></tr>
 <tr><td align="center">
 <input type="text" name="email" size="20" placeholder="email"> </input>
@@ -40,7 +57,7 @@
 </td></tr>
 <tr><td colspan="2" >&nbsp;&nbsp;&nbsp;<b>Position:</b> <input type="text" size="20" name="position" placeholder="optional"></input></td>
 <td colspan="3" ><b>Company:</b> <input type="text" size="20" name="company" placeholder="optional"></input></td></tr>
-<tr><td colspan="5" align="center"><input type="submit" value="Submit" name="submit"></td></tr>
+<tr><td colspan="5" align="center"><input type="submit" value="Submit" id="submit" name="submit" onClick="javascript:autoJSSubmit();"></td></tr>
 </table>
 </form>
 </div>

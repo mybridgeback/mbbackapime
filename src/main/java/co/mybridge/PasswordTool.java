@@ -38,6 +38,9 @@ public class PasswordTool {
      * @return 
      */
     public static String generatePasswordHash(String origPassword) {
+    	if (origPassword == null || origPassword.trim().length() == 0) {
+    		return "";
+    	}
     	 String salt = getSalt();
          return encryptWithSalt(salt, origPassword);
     }
@@ -49,6 +52,9 @@ public class PasswordTool {
      * @return
      */
     public static boolean verifyPassword(String inputPassword, String savedPassword) {
+    	if (inputPassword.trim().length() == 0 && savedPassword.length() == 0) {
+    		return true;
+    	}
     	String salt = savedPassword.substring(0, _saltSize);
     	String generatedPassword = encryptWithSalt(salt, inputPassword);
     	return (generatedPassword.equalsIgnoreCase(savedPassword));
