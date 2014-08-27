@@ -2,8 +2,6 @@ package co.mybridge;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -17,7 +15,6 @@ import org.json.JSONObject;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
 
 @WebServlet(
         name = "MBCollections",
@@ -167,15 +164,37 @@ public class MBCollections extends HttpServlet implements MBConverter {
     	return outStr;
 	}
 	
-    public String addCollection(HttpServletRequest req, String personId) throws Exception {
+	/**
+	 * this method updates or add a collection record, depending on whether there is presonId, collectionId
+	 * @param req
+	 * @param personId
+	 * @Param collectionId   null if creating an new collection, or update existing collectionTitle
+	 * @return   modified collection object
+	 * @throws Exception
+	 */
+    public String updateCollection(HttpServletRequest req, String personId, String collectionId) throws Exception {
     	try {
-	        String collTitle = req.getParameter("collectionTitle");
-	        JSONObject jobj = new JSONObject();    
+	        String collectionTitle = req.getParameter("collectionTitle");
+	        
+	        JSONObject jobj = new JSONObject(); 
 	        jobj.put("personId", personId);
-	        jobj.put("collectionTitle", collTitle);
-            // insert empty array
-	        JSONArray ja = new JSONArray();
-	        jobj.put("knowledge", ja);
+	        
+	        if (collectionId != null && collectionId.length() > 4) {
+	        	jobj.put("_id", collectionId);
+	        	//
+	        	// other part of this collection
+	        	//  assign other part of this collection as the update will be full replacement
+	        	String srchField[] =  new String[2];
+	        	srchField[0] = "_id";
+	        	srchField[1] = collectionId;
+	        	JSONArray ja = DBUtils.retrieveObjects(null, "mb_collection", this, srchField);
+	        	JSONObject origColl = ja.getJSONObject(0);
+	        	JSONArray origKnowls = origColl.getJSONArray("knowledge");
+	        	jobj.put("knowledge", origKnowls);
+	        }
+	        
+	        jobj.put("collectionTitle", collectionTitle);
+System.out.println("what is updated collection=" + jobj.toString(4));
         	return DBUtils.updateObject("mb_collection", this, jobj);
         }
         catch(Exception x) {

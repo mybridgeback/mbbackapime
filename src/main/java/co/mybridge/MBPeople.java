@@ -123,6 +123,7 @@ public class MBPeople extends HttpServlet implements MBConverter {
         resp.setContentType("application/json");
         try {
         	JSONObject requestOBJ = determineRequestDispatcher(req);
+        	System.out.println("requestOBJ " + requestOBJ.toString(4));
         	if ("people".equals(requestOBJ.getString("type"))) {
         		String pid = null;
         		if (requestOBJ.has("personOBJ")) {
@@ -143,10 +144,14 @@ public class MBPeople extends HttpServlet implements MBConverter {
         		//
         		// create a new collection for this person based on request parameters
         		MBCollections mbColl = new MBCollections();
-        		String collId = mbColl.addCollection(req, personId);
+        		String collId = mbColl.updateCollection(req, personId, null);
         		System.out.println("Successfully inserted a collection, with assigned ID=" + collId);
         	} else if ("knowledge".equals(requestOBJ.getString("type"))) {
         		// later
+        		String personId = requestOBJ.getJSONObject("personOBJ").getString("_id");
+        		String collectionId = requestOBJ.getJSONObject("collectionOBJ").getString("_id");
+        		MBKnowledge knowl = new MBKnowledge();
+        		String knowId = knowl.updateKnowledge(req, collectionId, null);
         	}
         }
         catch (Exception x) {
@@ -336,7 +341,6 @@ public class MBPeople extends HttpServlet implements MBConverter {
     	// check specific person id
     	// we are already in "/api/people/"
 		String nextPath = req.getPathInfo();
-		
 		if (nextPath != null && nextPath.length() > 5) {
 			// there is a person id in the path, use it
 			if (nextPath.startsWith("/")) {
@@ -353,7 +357,9 @@ public class MBPeople extends HttpServlet implements MBConverter {
 				if (nextPath.equals("/") || nextPath.length() < 3) {
 					// no meaningful path
 					nextPath = "";
-				} 
+				}  else if (nextPath.startsWith("/")) {
+					nextPath = nextPath.substring(1);
+				}
 			} else {
 				nextPath = "";
 			}
@@ -374,12 +380,14 @@ public class MBPeople extends HttpServlet implements MBConverter {
 			if (nextPath.length() > 2 && nextPath.startsWith("collections")) {
 				if (nextPath.matches("collections/[a-zA-Z_0-9]+.*")) {
 					// get collection object
+					System.out.println("what is my nextPath=" + nextPath);
 					String collId = nextPath.substring(12);
 					int nextSlash = collId.indexOf("/");
 					if (nextSlash > 1) {
-						collId = collId.substring(0, nextSlash);
 						// set nextPath to be a sub string after collectionId, including slash
 						nextPath = collId.substring(nextSlash);
+						collId = collId.substring(0, nextSlash);
+						System.out.println("what is my colId and nextPath=" + nextPath);
 						if (nextPath.length() > 5) {
 							if (nextPath.startsWith("/")) {
 								nextPath = nextPath.substring(1);
@@ -390,6 +398,7 @@ public class MBPeople extends HttpServlet implements MBConverter {
 					} else {
 						nextPath = "";
 					}
+					System.out.println("what is my nextPath=" + nextPath);
 					MBCollections mbcoll = new MBCollections();
 					String collStr = mbcoll.getCollections(req, collId);
 					JSONObject collOBJ = new JSONObject(collStr);
@@ -419,6 +428,7 @@ public class MBPeople extends HttpServlet implements MBConverter {
 			// /api/people/ request, without personId
 			retO.put("type", "people");
 		}
+		System.out.println("obj=" + retO.toString(4));
 		return retO;
     }
 }

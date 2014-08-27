@@ -133,4 +133,55 @@ public class MBKnowledge extends HttpServlet implements MBConverter {
         	return null;
         }
 	}
+	/**
+	 * this method updates or add a knowledge record, depending on whether there is presonId, collectionId
+	 * @param req
+	 * @param personId
+	 * @Param collectionId   null if creating an new collection, or update existing collectionTitle
+	 * @return   modified collection object
+	 * @throws Exception
+	 */
+    public String updateKnowledge(HttpServletRequest req, String collectionId, String knowledgeId) 
+    		throws Exception {
+    	try {
+	        String title = req.getParameter("title");
+	        String contentSource = req.getParameter("contentSource");
+	        String externalURL = req.getParameter("externalURL");
+	        String htmlBody = req.getParameter("htmlBody");
+	        String thumbImage = req.getParameter("thumbImage");
+	        String width = req.getParameter("width");
+	        String height = req.getParameter("height");
+	        
+	        
+	        JSONObject jobj = new JSONObject(); 
+	        jobj.put("title", title);
+	        jobj.put("contentSource", contentSource);
+	        jobj.put("externalURL", externalURL);
+	        jobj.put("htmlBody", htmlBody);
+	        jobj.put("thumbImage", thumbImage);
+	        jobj.put("width", Integer.parseInt(width));
+	        jobj.put("height", Integer.parseInt(height));
+
+        	String knowlId = DBUtils.updateObject("mb_knowledge", this, jobj);
+        	
+        	// load collection and add this in
+        	String srchFields[] = new String[2];
+        	srchFields[0] = "_id";
+        	srchFields[1] = collectionId;
+        	JSONArray ja = DBUtils.retrieveObjects(null, "mb_collection", this, srchFields);
+        	JSONObject collObj = ja.getJSONObject(0);
+        	
+        	String customDescription = req.getParameter("customDescription");
+        	JSONArray knowArray = collObj.getJSONArray("knowledge");
+        	knowArray.put(new JSONObject().put("knowledgeId", knowlId).put("customDescription", customDescription));
+        	collObj.put("knowledge", knowArray);
+        	
+        	MBCollections mbcoll = new MBCollections();
+        	return DBUtils.updateObject("mb_collection", mbcoll, collObj);
+        }
+        catch(Exception x) {
+        	x.printStackTrace();
+        	throw x;
+        }
+    }
 }

@@ -137,7 +137,7 @@ public class DBUtils {
 	    		// add entityThumb when file exist
 	    		if (dbo.containsField("thumbImage") && dbo.getString("thumbImage").length() > 4) {
     				copyImageDimensions(dbo, jobj);
-    			} else if (jobj.has("_id")) {
+    			} else if (jobj.has("_id") && req != null) {
     				// look for local file under /img/ directory
         			String objid = jobj.getString("_id");
 	    			String filename = "/img/" + objid +".jpg";
