@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.bson.types.ObjectId;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -100,7 +101,8 @@ public class MBCollections extends HttpServlet implements MBConverter {
 		if (jobj == null)  return null;
 		try {
 			if (jobj.has("_id")) {
-				retB.put("_id", jobj.getString("_id"));
+				ObjectId oid = new ObjectId(jobj.getString("_id"));
+				retB.put("_id", oid);
 			}
 			retB.put("personId", jobj.getString("personId"));
 			retB.put("collectionTitle", jobj.getString("collectionTitle"));
@@ -141,7 +143,7 @@ public class MBCollections extends HttpServlet implements MBConverter {
 			if (nextPath.indexOf('/') > 0) {
 				nextPath = nextPath.substring(0, nextPath.indexOf('/'));
 			}
-			System.out.println("Loading collection with _id=" + nextPath);
+
 			ja = DBUtils.retrieveObjects(req, "mb_collection", this, "_id", nextPath);
 			if (ja.length() != 1) {
 				return null;
@@ -169,7 +171,7 @@ public class MBCollections extends HttpServlet implements MBConverter {
 	 * @param req
 	 * @param personId
 	 * @Param collectionId   null if creating an new collection, or update existing collectionTitle
-	 * @return   modified collection object
+	 * @return   modified collectionId
 	 * @throws Exception
 	 */
     public String updateCollection(HttpServletRequest req, String personId, String collectionId) throws Exception {
@@ -194,7 +196,6 @@ public class MBCollections extends HttpServlet implements MBConverter {
 	        }
 	        
 	        jobj.put("collectionTitle", collectionTitle);
-System.out.println("what is updated collection=" + jobj.toString(4));
         	return DBUtils.updateObject("mb_collection", this, jobj);
         }
         catch(Exception x) {

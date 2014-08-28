@@ -146,15 +146,28 @@ public class MBPeople extends HttpServlet implements MBConverter {
         		MBCollections mbColl = new MBCollections();
         		String collId = mbColl.updateCollection(req, personId, null);
         		System.out.println("Successfully inserted a collection, with assigned ID=" + collId);
+        		JSONArray ja = DBUtils.retrieveObjects(req, "mb_collection", mbColl, "_id", collId);
+	        	JSONObject oneObj = ja.getJSONObject(0);
+	        	String outStr = oneObj.toString(4);     	
+	        	resp.setContentLength(outStr.length());
+	        	out.write(outStr.getBytes());
+	        	out.flush();
         	} else if ("knowledge".equals(requestOBJ.getString("type"))) {
         		// later
         		String personId = requestOBJ.getJSONObject("personOBJ").getString("_id");
         		String collectionId = requestOBJ.getJSONObject("collectionOBJ").getString("_id");
         		MBKnowledge knowl = new MBKnowledge();
         		String knowId = knowl.updateKnowledge(req, collectionId, null);
+        		JSONArray ja = DBUtils.retrieveObjects(req, "mb_knowledge", knowl, "_id", knowId);
+	        	JSONObject oneObj = ja.getJSONObject(0);
+	        	String outStr = oneObj.toString(4);     	
+	        	resp.setContentLength(outStr.length());
+	        	out.write(outStr.getBytes());
+	        	out.flush();
         	}
         }
         catch (Exception x) {
+        	x.printStackTrace();
         	resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Failed to create a user: " + x.getMessage());
         }
     }
@@ -265,7 +278,7 @@ public class MBPeople extends HttpServlet implements MBConverter {
 	 * this method updates or add a person record, depending on whether there is presonId
 	 * @param req
 	 * @param personId
-	 * @return
+	 * @return   a personId
 	 * @throws Exception
 	 */
     private String updatePerson(HttpServletRequest req, String personId) throws Exception {
@@ -277,7 +290,6 @@ public class MBPeople extends HttpServlet implements MBConverter {
 	        String fullname = req.getParameter("fullName");
 	        JSONObject jobj = new JSONObject(); 
 	        if (personId != null && personId.length() > 4) {
-	        	System.out.println("has ID " + personId);
 	        	jobj.put("_id", personId);
 	        }
 	        jobj.put("fullName", fullname);
@@ -363,7 +375,6 @@ public class MBPeople extends HttpServlet implements MBConverter {
 			} else {
 				nextPath = "";
 			}
-			System.out.println("Loading person with _id=" + _pid);
 			try {
 				JSONArray ja = DBUtils.retrieveObjects(req, "mb_person", this, "_id", _pid);
 				if (ja.length() != 1) {
@@ -380,14 +391,13 @@ public class MBPeople extends HttpServlet implements MBConverter {
 			if (nextPath.length() > 2 && nextPath.startsWith("collections")) {
 				if (nextPath.matches("collections/[a-zA-Z_0-9]+.*")) {
 					// get collection object
-					System.out.println("what is my nextPath=" + nextPath);
 					String collId = nextPath.substring(12);
 					int nextSlash = collId.indexOf("/");
 					if (nextSlash > 1) {
 						// set nextPath to be a sub string after collectionId, including slash
 						nextPath = collId.substring(nextSlash);
 						collId = collId.substring(0, nextSlash);
-						System.out.println("what is my colId and nextPath=" + nextPath);
+
 						if (nextPath.length() > 5) {
 							if (nextPath.startsWith("/")) {
 								nextPath = nextPath.substring(1);
@@ -398,7 +408,7 @@ public class MBPeople extends HttpServlet implements MBConverter {
 					} else {
 						nextPath = "";
 					}
-					System.out.println("what is my nextPath=" + nextPath);
+
 					MBCollections mbcoll = new MBCollections();
 					String collStr = mbcoll.getCollections(req, collId);
 					JSONObject collOBJ = new JSONObject(collStr);
@@ -428,7 +438,6 @@ public class MBPeople extends HttpServlet implements MBConverter {
 			// /api/people/ request, without personId
 			retO.put("type", "people");
 		}
-		System.out.println("obj=" + retO.toString(4));
 		return retO;
     }
 }

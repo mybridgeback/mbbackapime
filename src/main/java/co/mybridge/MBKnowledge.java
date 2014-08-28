@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.bson.types.ObjectId;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -84,7 +85,8 @@ public class MBKnowledge extends HttpServlet implements MBConverter {
 		if (jobj == null)   return null;
 		try {
 			if (jobj.has("_id")) {
-				retB.put("_id", jobj.getString("_id"));
+				ObjectId oid = new ObjectId(jobj.getString("_id"));
+				retB.put("_id", oid);
 			}
 			retB.put("title", jobj.getString("title"));
 			retB.put("width", jobj.getInt("width"));
@@ -115,7 +117,7 @@ public class MBKnowledge extends HttpServlet implements MBConverter {
 				if (nextPath.indexOf('/') > 0) {
 					nextPath = nextPath.substring(0, nextPath.indexOf('/'));
 				}
-				System.out.println("Loading content with _id=" + nextPath);
+
 				ja = DBUtils.retrieveObjects(req, "mb_knowledge", this, "_id", nextPath);
 				if (ja.length() == 1) {
 					JSONObject oneObj = ja.getJSONObject(0);
@@ -138,12 +140,14 @@ public class MBKnowledge extends HttpServlet implements MBConverter {
 	 * @param req
 	 * @param personId
 	 * @Param collectionId   null if creating an new collection, or update existing collectionTitle
-	 * @return   modified collection object
+	 * @return   knowledgeId
 	 * @throws Exception
 	 */
     public String updateKnowledge(HttpServletRequest req, String collectionId, String knowledgeId) 
     		throws Exception {
     	try {
+    		MBCollections mbcoll = new MBCollections();
+    		
 	        String title = req.getParameter("title");
 	        String contentSource = req.getParameter("contentSource");
 	        String externalURL = req.getParameter("externalURL");
@@ -168,16 +172,16 @@ public class MBKnowledge extends HttpServlet implements MBConverter {
         	String srchFields[] = new String[2];
         	srchFields[0] = "_id";
         	srchFields[1] = collectionId;
-        	JSONArray ja = DBUtils.retrieveObjects(null, "mb_collection", this, srchFields);
+        	JSONArray ja = DBUtils.retrieveObjects(null, "mb_collection", mbcoll, srchFields);
         	JSONObject collObj = ja.getJSONObject(0);
-        	
+
         	String customDescription = req.getParameter("customDescription");
         	JSONArray knowArray = collObj.getJSONArray("knowledge");
         	knowArray.put(new JSONObject().put("knowledgeId", knowlId).put("customDescription", customDescription));
         	collObj.put("knowledge", knowArray);
         	
-        	MBCollections mbcoll = new MBCollections();
-        	return DBUtils.updateObject("mb_collection", mbcoll, collObj);
+        	DBUtils.updateObject("mb_collection", mbcoll, collObj);
+        	return knowlId;
         }
         catch(Exception x) {
         	x.printStackTrace();

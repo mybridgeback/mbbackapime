@@ -41,7 +41,6 @@
       if (pid.length > 5 && cid.length > 5) {
           document.knowledgeform.action="/api/people/" + pid + "/collections/" + cid + "/knowledge/";
       }
-      alert("my path " + "/api/people/" + pid + "/collections/" + cid + "/knowledge/");
       // enable the button right before the submit, otherwise, the submit does not work.
       document.getElementById("knowlsubmit").disabled = false;
       document.getElementById("knowledgeform").submit();

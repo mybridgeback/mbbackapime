@@ -74,19 +74,19 @@ public class DBUtils {
 	    	DBCollection coll = db.getCollection(collname);
 	    	if (pobj.containsField("_id")) {
 	    		// it is an update
-	    		System.out.println("It's a update");
+	    		System.out.println("Updating an " + collname + " entry with: " + pobj.toString());
 	    		BasicDBObject locateIt = new BasicDBObject();
 	    		locateIt.put( "_id", pobj.getObjectId("_id") );
 	    		
 	    		BasicDBObject update = new BasicDBObject();
 	    		update.put( "$set", pobj);
 
-	    		System.out.println("what is basic DB: " + pobj.toString());
 	    		coll.update( locateIt, pobj );
 	    	} else {
 	    		coll.insert(pobj, WriteConcern.JOURNAL_SAFE);
+	    		System.out.println("Creating a " + collname +" entry: " + pobj.toString());
 	    	}
-	    	ObjectId id = (ObjectId)pobj.get( "_id" );
+	    	ObjectId id = pobj.getObjectId( "_id" );
 	    	return id.toString();
     	}
     	catch(Exception x) {
