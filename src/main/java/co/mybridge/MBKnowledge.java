@@ -67,7 +67,8 @@ public class MBKnowledge extends HttpServlet implements MBConverter {
 			retJ.put("height", bobj.getInt("height"));
 			if (bobj.containsField("htmlBody")) {
 				retJ.put("htmlBody", bobj.getString("htmlBody"));
-			} else {
+			} 
+			if (bobj.containsField("externalURL")){
 				retJ.put("externalURL", bobj.getString("externalURL"));
 			}
 			return retJ;
@@ -93,7 +94,8 @@ public class MBKnowledge extends HttpServlet implements MBConverter {
 			retB.put("height", jobj.getInt("height"));
 			if (jobj.has("htmlBody")) {
 				retB.put("htmlBody", jobj.getString("htmlBody"));
-			} else {
+			} 
+			if (jobj.has("externalURL")) {
 				retB.put("externalURL", jobj.getString("externalURL"));
 			}
 			return retB;

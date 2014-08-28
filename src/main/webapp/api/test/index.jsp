@@ -144,13 +144,13 @@
 </select>
 </center></h2></td></tr>
 
-<tr><td>Collection ID: <input type="text" name="collectionId" size="80" id="collectionId" value=""></td></tr>
+<tr><td>Collection ID: &nbsp;&nbsp;&nbsp;<input type="text" name="collectionId" size="40" id="collectionId" value=""></td></tr>
 <tr><td>Knowledge Title: <input type="text" name="title" size="80" value=""></td></tr>
-<tr><td>My Own description: <input type="text" name="customDescription" size="100" value=""></td></tr>
-<tr><td>From Source: <input type="text" name="contentSource" placeholder="such as \"from Youtube\"" value=""></td></tr>
-<tr><td>External URL: <input type="text" name="externalURL"  value=""></td></tr>
-<tr><td>HTML Body: <input type="text" name="htmlBody"  size="120" value=""></td></tr>
-<tr><td>Image URL: <input type="text" name="thumbImage"  size="80" value=""></td></tr>
+<tr><td>My Own description: <input type="text" name="customDescription" size="75" value=""></td></tr>
+<tr><td>From Source: <input type="text" name="contentSource" size="20" placeholder="such as  Youtube" value=""></td></tr>
+<tr><td>External URL: <input type="text" name="externalURL" size="100" value=""></td></tr>
+<tr><td>HTML Body: <input type="text" name="htmlBody"  size="100" value=""></td></tr>
+<tr><td>Thumb URL: <input type="text" name="thumbImage"  size="60" value=""></td></tr>
 <tr><td>Content Width: <input type="text" name="width"  size="8" value=""></td></tr>
 <tr><td>Content Height: <input type="text" name="height"  size="8" value=""></td></tr>
 <tr><td align="center"><input type="submit" value="Submit" id="knowlsubmit" name="knowlsubmit" 
