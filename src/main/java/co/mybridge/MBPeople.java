@@ -193,6 +193,9 @@ public class MBPeople extends HttpServlet implements MBConverter {
     		if (p.containsField("company")) {
     			retObj.put("company", p.getString("company"));
     		}
+    		if (p.containsField("education")) {
+    			retObj.put("education", p.getString("education"));
+    		}
     		List<String> indL = (List<String>)p.get("industries"); 		
     		for (String i : indL) {
     			retObj.append("industries", i);
@@ -241,7 +244,9 @@ public class MBPeople extends HttpServlet implements MBConverter {
     		if (p.has("company")) {
     			retObj.put("company", p.getString("company"));
     		}
-    		
+    		if (p.has("education")) {
+    			retObj.put("education", p.getString("education"));
+    		}
     		JSONArray ind = p.getJSONArray("industries"); 	
     		ArrayList<String> indL = new ArrayList<String>();
     		for (int i = 0; i< ind.length(); i++) {
@@ -312,11 +317,15 @@ public class MBPeople extends HttpServlet implements MBConverter {
 	        
 	        String position = req.getParameter("position");
 	        String company = req.getParameter("company");
+	        String education = req.getParameter("education");
 	        if (position != null && position.length() > 1) {
 	        	jobj.put("position", position);
 	        }
 	        if (company != null && company.length() > 1) {
 	        	jobj.put("company", company);
+	        }
+	        if (education != null && education.length() > 1) {
+	        	jobj.put("education", education);
 	        }
 
         	return DBUtils.updateObject("mb_person", this, jobj);

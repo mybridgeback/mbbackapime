@@ -71,6 +71,15 @@ public class MBKnowledge extends HttpServlet implements MBConverter {
 			if (bobj.containsField("externalURL")){
 				retJ.put("externalURL", bobj.getString("externalURL"));
 			}
+			if (bobj.containsField("contentSource")) {
+				retJ.put("contentSource", bobj.getString("contentSource"));
+			}
+			if (bobj.containsField("contentType")) {
+				retJ.put("contentType", bobj.getString("contentType"));
+			}
+			if (bobj.containsField("publisher")) {
+				retJ.put("publisher", bobj.getString("publisher"));
+			}
 			return retJ;
 		}
 		catch(Exception e) {
@@ -97,6 +106,15 @@ public class MBKnowledge extends HttpServlet implements MBConverter {
 			} 
 			if (jobj.has("externalURL")) {
 				retB.put("externalURL", jobj.getString("externalURL"));
+			}
+			if (jobj.has("contentSource")) {
+				retB.put("contentSource", jobj.getString("contentSource"));
+			}
+			if (jobj.has("contentType")) {
+				retB.put("contentType", jobj.getString("contentType"));
+			}
+			if (jobj.has("publisher")) {
+				retB.put("publisher", jobj.getString("publisher"));
 			}
 			return retB;
 		} catch(Exception e) {
@@ -152,6 +170,8 @@ public class MBKnowledge extends HttpServlet implements MBConverter {
     		
 	        String title = req.getParameter("title");
 	        String contentSource = req.getParameter("contentSource");
+	        String publisher = req.getParameter("publisher");
+	        String contentType = req.getParameter("contentType");
 	        String externalURL = req.getParameter("externalURL");
 	        String htmlBody = req.getParameter("htmlBody");
 	        String thumbImage = req.getParameter("thumbImage");
@@ -161,7 +181,15 @@ public class MBKnowledge extends HttpServlet implements MBConverter {
 	        
 	        JSONObject jobj = new JSONObject(); 
 	        jobj.put("title", title);
-	        jobj.put("contentSource", contentSource);
+	        if (contentSource != null && contentSource.length() > 1) {
+	        	jobj.put("contentSource", contentSource);
+	        }
+	        if (publisher != null && publisher.length() > 1){
+	        	jobj.put("publisher", publisher);
+	        }
+	        if (contentType != null && contentType.length() > 1) {
+	        	jobj.put("contentType", contentType);
+	        }
 	        jobj.put("externalURL", externalURL);
 	        jobj.put("htmlBody", htmlBody);
 	        jobj.put("thumbImage", thumbImage);

@@ -1,8 +1,11 @@
 <!DOCTYPE HTML>
-<%@page import="org.json.JSONArray, org.json.JSONObject, co.mybridge.MBPeople, co.mybridge.DBUtils" %>
+<%@page import="org.json.JSONArray, org.json.JSONObject, org.apache.commons.lang.StringEscapeUtils,  
+        co.mybridge.MBPeople, co.mybridge.MBCollections, co.mybridge.DBUtils" %>
 <%
     MBPeople mp = new MBPeople();
-    JSONArray ja = DBUtils.retrieveObjects(null, "mb_person", mp, "no");
+    JSONArray javaPeople = DBUtils.retrieveObjects(null, "mb_person", mp, "no");
+    MBCollections mc = new MBCollections();
+    JSONArray javaCollections = DBUtils.retrieveObjects(null, "mb_collection", mc, "no");
 %>
 <html>
 <head>
@@ -13,6 +16,10 @@
     :-ms-input-placeholder { color:#f00; } /* ie */
     input:-moz-placeholder { color:#f00; }
   </style>
+  <script language="JavaScript">
+  jsCollections=eval('<%=StringEscapeUtils.escapeJavaScript(javaCollections.toString())%>');
+  jsPeople=eval('<%=StringEscapeUtils.escapeJavaScript(javaPeople.toString())%>');
+  </script>
   <script language="JavaScript">
   function autoPSSubmit() {
       document.getElementById("submit").disabled = true;
@@ -45,6 +52,95 @@
       document.getElementById("knowlsubmit").disabled = false;
       document.getElementById("knowledgeform").submit();
   }
+  
+  function populateCollections(personDropDown) {
+      var pid = personDropDown.value;
+      var collOpt = "";
+      for (var x=0; x<jsCollections.length; x++) {
+           
+          var coll = jsCollections[x];
+              var collpid = coll.personId;
+              if (collpid == pid) {
+                  var collId = coll._id;
+                  var collTitle = coll.collectionTitle;
+                  collOpt = collOpt + '\n<option value=\"' + collId + '\">' + collTitle + '</option>';
+              }
+      }
+      document.getElementById("collectionId").innerHTML = collOpt;
+  }
+  function populateExistingColls(personDropDown) {
+      var pid = personDropDown.value;
+      var collOpt = "";
+      for (var x=0; x<jsCollections.length; x++) {
+           
+          var coll = jsCollections[x];
+              var collpid = coll.personId;
+              if (collpid == pid) {
+                  var collTitle = coll.collectionTitle;
+                  if (collOpt == "") {
+                      collOpt = collTitle;
+                  } else {
+                      collOpt = collOpt + '&nbsp;;&nbsp;&nbsp;' + collTitle;
+                  }
+              }
+      }
+      document.getElementById("existColls").innerHTML = collOpt;
+  }
+  function populatePerson(personDropDown) {
+      var pid = personDropDown.value;
+      for (var x=0; x<jsPeople.length; x++) {    
+          var coll = jsPeople[x];
+          var jspid = coll._id;
+          if (jspid == pid) {
+              var email = coll.email;
+              var fullName = coll.fullName;
+              var position = coll.position;
+              var company = coll.company;
+              var thumbImage = coll.thumbImage;
+              var education = coll.education;
+              var professions = coll.professions;
+              
+              if (email != null && email.length > 1) {
+              	  personform.email.value = email;
+              } else {
+                  personform.email.value = '';
+              }
+              personform.fullName.value = fullName;
+              if (position != null && position.length > 0) {
+                  personform.position.value = position;
+              } else {
+                  personform.position.value = '';
+              }
+              if (company != null && company.length > 0) {
+                  personform.company.value = company;
+              } else {
+                  personform.company.value = '';
+              }
+              personform.thumbImage.value = thumbImage;
+              if (education != null && education.length > 1) {
+                  personform.education.value = education;
+              } else {
+                  personform.education.value = '';
+              }
+                 
+              var profform = personform.profession;
+              for (j=0; j< profform.length; j++) {
+                  profform[j].checked = false;
+              }
+              if (professions.length > 0) {
+                  for (i=0; i<professions.length; i++) {
+                 		var prof = professions[i];
+                   		for (j=0; j< profform.length; j++) {
+                   		    if (profform[j].value == prof) {
+                   		        profform[j].checked = true;
+                   		    }
+                   		}
+                  }
+              }
+              break;
+          }
+      }
+  }
   </script>
 </head>
 <body>
@@ -52,21 +148,21 @@
 <div id="sec1">
 <h2>Add or modify a user</h2>
 <form name="personform" id="personform" action="/api/people" method="post">
-<table width="80%" border="0">
-<tr><td colspan="4"><h2><center>
-<select name="personId" id="personId">
+<table width="90%" border="0" align="center">
+<tr><td colspan="4"><h2>
+<select name="personId" id="personId" onchange="populatePerson(this);">
 <option value="">Create a new user</option>
 <%
-    for (int i = 0; i< ja.length(); i++) {
-        JSONObject jobj = ja.getJSONObject(i);
+    for (int i = 0; i< javaPeople.length(); i++) {
+        JSONObject jobj = javaPeople.getJSONObject(i);
 %>
-        <option value="<%= jobj.getString("_id") %>">change  <%= jobj.getString("fullName") %></option>
+        <option value="<%= jobj.getString("_id") %>">Update   <%= jobj.getString("fullName") %></option>
 <%
     }      
 %>
 
 </select>
-</center></h2></td></tr>
+</h2></td></tr>
 
 <tr><th> Email</th><th>Password</th><th>Name</th><th>Industry</th><th>Profession</th></tr>
 <tr><td align="center">
@@ -91,33 +187,36 @@
 <input type="text" name="thumbImage" size="45" placeholder="Enter Image URL here"></input>
 </td></tr>
 <tr><td colspan="2" >&nbsp;&nbsp;&nbsp;<b>Position:</b> <input type="text" size="20" name="position" placeholder="optional"></input></td>
-<td colspan="3" ><b>Company:</b> <input type="text" size="20" name="company" placeholder="optional"></input></td></tr>
+<td colspan="2" ><b>Company:</b> <input type="text" size="20" name="company" placeholder="optional"></input></td>
+<td><b>Education: </b><input type="text" size="10" name="education" placeholder="optional"></input></td></tr>
 <tr><td colspan="5" align="center"><input type="submit" value="Submit" id="submit" name="submit" 
     onClick="javascript:autoPSSubmit();"></td></tr>
 </table>
 </form>
 </div>
 <br>
+<hr>
 <div id="sec2">
 <h2>Add a collection</h2>
 
 <form name="collectionform" id="collectionform" action="/api/people/" method="post">
-<table width="80%" border="0">
-<tr><td ><h2><center>
-<select name="collPersonId" id="collPersonId">
+<table width="80%" border="0" align="center">
+<tr><td >
+<select name="collPersonId" id="collPersonId" onchange="populateExistingColls(this);">
+<option value="" disabled selected style="display:none;">Select a person</option>
 <%
-    for (int i = 0; i< ja.length(); i++) {
-        JSONObject jobj = ja.getJSONObject(i);
+    for (int i = 0; i< javaPeople.length(); i++) {
+        JSONObject jobj = javaPeople.getJSONObject(i);
 %>
-        <option value="<%= jobj.getString("_id") %>">coll for  <%= jobj.getString("fullName") %></option>
+        <option value="<%= jobj.getString("_id") %>">  <%= jobj.getString("fullName") %></option>
 <%
     }      
 %>
 
 </select>
-</center></h2></td></tr>
-
-<tr><td>Collection Title: <input type="text" name="collectionTitle" value=""></td></tr>
+</td></tr>
+<tr><td><b>Existing collections: </b><span id="existColls">  </span><td><tr>
+<tr><td>New collection title: <input type="text" name="collectionTitle" size="40" value=""></td></tr>
 
 <tr><td align="center"><input type="submit" value="Submit" id="collsubmit" name="collsubmit" 
       onClick="javascript:autoCollSubmit();"></td></tr>
@@ -125,35 +224,41 @@
 </form>
 
 </div>
-
+<hr>
 <div id="sec3">
 <h2>Add a knowledge</h2>
 <form name="knowledgeform" id="knowledgeform" action="/api/people/" method="post">
-<table width="80%" border="0">
-<tr><td ><h2><center>
-<select name="knowlPersonId" id="knowlPersonId">
+<table width="80%" border="0" align="center">
+<tr><td >
+<select name="knowlPersonId" id="knowlPersonId" onchange="populateCollections(this);">
+<option value="" disabled selected style="display:none;">Select a person</option>
 <%
-    for (int i = 0; i< ja.length(); i++) {
-        JSONObject jobj = ja.getJSONObject(i);
+    for (int i = 0; i< javaPeople.length(); i++) {
+        JSONObject jobj = javaPeople.getJSONObject(i);
 %>
         <option value="<%= jobj.getString("_id") %>">knowledge for  <%= jobj.getString("fullName") %></option>
 <%
     }      
 %>
 
-</select>
-</center></h2></td></tr>
+</select></td>
+<td >
+<select name="collectionId" id="collectionId">
 
-<tr><td>Collection ID: &nbsp;&nbsp;&nbsp;<input type="text" name="collectionId" size="40" id="collectionId" value=""></td></tr>
-<tr><td>Knowledge Title: <input type="text" name="title" size="80" value=""></td></tr>
-<tr><td>My Own description: <input type="text" name="customDescription" size="75" value=""></td></tr>
-<tr><td>From Source: <input type="text" name="contentSource" size="20" placeholder="such as  Youtube" value=""></td></tr>
-<tr><td>External URL: <input type="text" name="externalURL" size="100" value=""></td></tr>
-<tr><td>HTML Body: <input type="text" name="htmlBody"  size="100" value=""></td></tr>
-<tr><td>Thumb URL: <input type="text" name="thumbImage"  size="60" value=""></td></tr>
-<tr><td>Content Width: <input type="text" name="width"  size="8" value=""></td></tr>
-<tr><td>Content Height: <input type="text" name="height"  size="8" value=""></td></tr>
-<tr><td align="center"><input type="submit" value="Submit" id="knowlsubmit" name="knowlsubmit" 
+</select></td>
+</tr>
+
+<tr><td>Knowledge Title: </td><td><input type="text" name="title" size=60" value=""></td></tr>
+<tr><td>My Own description: </td><td> <input type="text" name="customDescription" size="60" value=""></td></tr>
+<tr><td>From Source: </td><td> <input type="text" name="contentSource" size="20"  value="YouTube"></td></tr>
+<tr><td>Publisher: </td><td> <input type="text" name="publisher" size="40"  value=""></td></tr>
+<tr><td>Type: </td><td> <input type="text" name="contentType" size="20"  value="Video"></td></tr>
+<tr><td>External URL:  </td><td><input type="text" name="externalURL" size="70" value=""></td></tr>
+<tr><td>HTML Body:  </td><td><input type="text" name="htmlBody"  size="70" value=""></td></tr>
+<tr><td>Thumb URL:  </td><td><input type="text" name="thumbImage"  size="60" value=""></td></tr>
+<tr><td>Content Width:  </td><td><input type="text" name="width"  size="8" value=""></td></tr>
+<tr><td>Content Height:  </td><td><input type="text" name="height"  size="8" value=""></td></tr>
+<tr><td align="center" colspan=2><input type="submit" value="Submit" id="knowlsubmit" name="knowlsubmit" 
 onClick="javascript:autoKnowlSubmit();"></td></tr>
 </table>
 </form>
