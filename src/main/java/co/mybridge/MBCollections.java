@@ -52,10 +52,10 @@ public class MBCollections extends HttpServlet implements MBConverter {
 	 * The JSONObject for Collections are like:
 	 * <pre>
 	 * { _id: ObjectID,
-	 *   person_id: ObjectID,
-	 *   collection_title:  String,
-	 *   contents: [
-	 *       content_id, ...
+	 *   personId: ObjectID,
+	 *   collectionTitle:  String,
+	 *   knowledge: [
+	 *       {knowledgeId, customDescription}, ...
 	 *   ]
 	 * }</pre>
 	 */
@@ -152,11 +152,14 @@ public class MBCollections extends HttpServlet implements MBConverter {
 			outStr = oneObj.toString(4);
 		} else {
 			// check query parameters
-			String person_id = req.getParameter("personId");
-			if (person_id != null && person_id.length() > 5) {
-				String srchFields[] = new String[2];
-				srchFields[0] = "personId";
-				srchFields[1] = person_id;
+			String person_ids[] = req.getParameterValues("personId");
+			if (person_ids != null && person_ids.length > 0) {
+				int maxfields = person_ids.length * 2;
+				String srchFields[] = new String[maxfields];
+				for (int i = 0; i < person_ids.length; i++) {
+					srchFields[i * 2] = "personId";
+					srchFields[i*2 + 1] = person_ids[i];
+				}
 				ja = DBUtils.retrieveObjects(req, "mb_collection", this, srchFields);
 			} else {
 				ja = DBUtils.retrieveObjects(req, "mb_collection", this, "no");

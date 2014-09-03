@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.bson.types.ObjectId;
 import org.json.*;
 
+import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
@@ -113,18 +114,33 @@ public class DBUtils {
 	    	DBCollection coll = db.getCollection(collname);
 	    	DBCursor dbC = null;
 	    	if (srchField.length > 1) {
+	    		BasicDBList idList = new BasicDBList();
+	    		BasicDBList personList = new BasicDBList();
+	    		BasicDBList profList = new BasicDBList();
 	    		BasicDBObject srchobj = new BasicDBObject();
 	    		int l = srchField.length;
 	    		for (int j = 0; j< l-1; j=j+2) {
 	    			String f = srchField[j];
 	    			String v = srchField[j+1];
 	    			if (f.equalsIgnoreCase("_id") ) {
-	    				srchobj.put(f, new ObjectId(v));
-	    			} else if ( f.equalsIgnoreCase("person_id") || f.equalsIgnoreCase("knowledge")){
-	    				srchobj.put(f, v);
+	    				idList.add(new ObjectId(v));
+	    			} else if ( f.equalsIgnoreCase("personId")){
+	    				personList.add(v);
+	    			} else if ( f.equalsIgnoreCase("profession")){
+	    				profList.add(v);
 	    			} else {
-	    				srchobj.append(f, v);
+	    				srchobj.put(f, v);
 	    			}
+	    		}
+	    		if (idList.size() > 0) {
+    				srchobj.append("_id", new BasicDBObject("$in", idList));
+    			} 
+	    		if (personList.size() > 0) {
+	    			srchobj.append("personId", new BasicDBObject("$in", personList));
+	    		}
+	    		if (profList.size() > 0) {
+	    			System.out.println("search professions=" + profList.toString());
+	    			srchobj.append("professions", new BasicDBObject("$in", profList));
 	    		}
 	    		dbC = coll.find( srchobj );
 	    	} else {

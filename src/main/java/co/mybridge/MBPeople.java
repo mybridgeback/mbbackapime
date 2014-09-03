@@ -3,7 +3,9 @@ package co.mybridge;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import javax.servlet.ServletException;
@@ -68,7 +70,7 @@ public class MBPeople extends HttpServlet implements MBConverter {
         				}
         				if (professions != null) {
     	    				for (int y = 0; y < professions.length ; y++) {
-    	    					srchFields[s] = "professions";
+    	    					srchFields[s] = "profession";
     	    					srchFields[s+1] = professions[y];
     	    					s=s+2;
     	    				}
@@ -98,7 +100,20 @@ public class MBPeople extends HttpServlet implements MBConverter {
             		nextPath = requestJSON.getString("nextPath");
             	}
             	MBKnowledge mbKnowl = new MBKnowledge();
-            	outStr = mbKnowl.getKnowledge(req, nextPath);
+            	if (requestJSON.has("collectionOBJ")) {
+            		JSONObject collObj = requestJSON.getJSONObject("collectionOBJ");
+            		JSONArray knowledgeArray = collObj.getJSONArray("knowledge");
+            		int totalFields = knowledgeArray.length();
+            		String valFields[] = new String[totalFields];
+    				for (int j = 0; j< knowledgeArray.length(); j++) {
+    					valFields[j] = knowledgeArray.getJSONObject(j).getString("knowledgeId");
+    				}
+    				Map<String, String[]> srchMap = new HashMap<String, String[]>();
+    				srchMap.put("_id", valFields);
+    				outStr = mbKnowl.getKnowledge(req, nextPath, srchMap);
+            	} else {
+            		outStr = mbKnowl.getKnowledge(req, nextPath, null);
+            	}
             }
         	if (outStr == null) {
         		resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Failed to get content by ID");

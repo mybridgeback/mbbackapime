@@ -1,6 +1,7 @@
 package co.mybridge;
 
 import java.io.IOException;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -33,7 +34,8 @@ public class MBKnowledge extends HttpServlet implements MBConverter {
         String outStr = null;
 
 		String nextPath = req.getPathInfo();
-		outStr = getKnowledge(req, nextPath);
+		Map<String, String[]> paramMap = req.getParameterMap();
+		outStr = getKnowledge(req, nextPath, paramMap);
 
 		if (outStr == null) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Failed to get knowledge");
@@ -125,7 +127,7 @@ public class MBKnowledge extends HttpServlet implements MBConverter {
 		return null;
 	}
 
-	public String getKnowledge(HttpServletRequest req, String nextPath) {
+	public String getKnowledge(HttpServletRequest req, String nextPath, Map<String, String[]> paramMap) {
 		JSONArray ja = null;
         try {
 	        // check specific content id
@@ -145,10 +147,26 @@ public class MBKnowledge extends HttpServlet implements MBConverter {
 				} else {
 					return null;
 				}
+			} else if (paramMap != null && paramMap.size() > 0) {
+				int totalFields = 0;
+				for (String[] val : paramMap.values() ) {
+					totalFields += val.length * 2;
+				}
+				String srchFields[] = new String[totalFields];
+				int i = 0;
+				for (String key: paramMap.keySet()) {
+					String[] vals = paramMap.get(key);
+					for (int j = 0; j< vals.length; j++) {
+						srchFields[i] = key;
+						srchFields[i+1] = vals[j];
+						i = i + 2;
+					}
+				}
+				ja = DBUtils.retrieveObjects(req, "mb_knowledge", this, srchFields);
 			} else {
 				ja = DBUtils.retrieveObjects(req, "mb_knowledge", this, "no");
-				return ja.toString(4);
 			}
+			return ja.toString(4);
         } catch(Exception e) {
         	System.out.println("Failed to load contents: " + e.getMessage());
         	e.printStackTrace();
