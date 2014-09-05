@@ -52,23 +52,46 @@
       document.getElementById("knowlsubmit").disabled = false;
       document.getElementById("knowledgeform").submit();
   }
+  function autoFollowSubmit() {
+      document.getElementById("followsubmit").disabled = true;
+      var pid = document.getElementById("followerId").value;
+      if (pid.length > 5 ) {
+          document.followform.action="/api/people/" + pid + "/following/";
+      }
+      document.getElementById("followsubmit").disabled = true;
+      document.getElementById("followform").submit();
+  }
   
-  function populateCollections(personDropDown) {
+  function toggleContentType(formElem, collDropDown) {
+      var coll = collDropDown.value;
+      if (coll != null && coll.length > 1) {
+          formElem.contentType.value="collections";
+      } else {
+          formElem.contentType.value="people";
+      }
+  }
+  /**
+   *  this will populate collection options with collectionId in this form
+   */
+  function populateCollections(formElem, personDropDown) {
       var pid = personDropDown.value;
-      var collOpt = "";
+      var selectElem = formElem.collectionId;
+      // remove everything except the first one
+      selectElem.options.length = 1;
+      
       for (var x=0; x<jsCollections.length; x++) {
            
           var coll = jsCollections[x];
-              var collpid = coll.personId;
-              if (collpid == pid) {
-                  var collId = coll._id;
-                  var collTitle = coll.collectionTitle;
-                  collOpt = collOpt + '\n<option value=\"' + collId + '\">' + collTitle + '</option>';
-              }
+          var collpid = coll.personId;
+          if (collpid == pid) {
+              var collOpt = document.createElement("option");
+              collOpt.text = coll.collectionTitle;
+              collOpt.value = coll._id;
+              selectElem.add(collOpt);
+          }
       }
-      document.getElementById("collectionId").innerHTML = collOpt;
   }
-  function populateExistingColls(personDropDown) {
+  function displayExistingColls(personDropDown) {
       var pid = personDropDown.value;
       var collOpt = "";
       for (var x=0; x<jsCollections.length; x++) {
@@ -144,7 +167,7 @@
   </script>
 </head>
 <body>
-<h1>Testing data entry</h1>
+<h1>Testing data entry, utilizing add/modify APIs</h1>
 <div id="sec1">
 <h2>Add or modify a user</h2>
 <form name="personform" id="personform" action="/api/people" method="post">
@@ -202,7 +225,7 @@
 <form name="collectionform" id="collectionform" action="/api/people/" method="post">
 <table width="80%" border="0" align="center">
 <tr><td >
-<select name="collPersonId" id="collPersonId" onchange="populateExistingColls(this);">
+<select name="collPersonId" id="collPersonId" onchange="displayExistingColls(this);">
 <option value="" disabled selected style="display:none;">Select a person</option>
 <%
     for (int i = 0; i< javaPeople.length(); i++) {
@@ -226,11 +249,11 @@
 </div>
 <hr>
 <div id="sec3">
-<h2>Add a knowledge</h2>
+<h2>Add a knowledge to a collection</h2>
 <form name="knowledgeform" id="knowledgeform" action="/api/people/" method="post">
 <table width="80%" border="0" align="center">
 <tr><td >
-<select name="knowlPersonId" id="knowlPersonId" onchange="populateCollections(this);">
+<select name="knowlPersonId" id="knowlPersonId" onchange="populateCollections(document.knowledgeform, this);">
 <option value="" disabled selected style="display:none;">Select a person</option>
 <%
     for (int i = 0; i< javaPeople.length(); i++) {
@@ -263,6 +286,54 @@ onClick="javascript:autoKnowlSubmit();"></td></tr>
 </table>
 </form>
 
+</div>
+
+<hr>
+<div id="sec4">
+<h2>Follow a person or a collection</h2>
+<form name="followform" id="followform"  action="/api/people/" method="post">
+<table width="80%" border="0" align="center">
+<tr><td colspan=2> Current user :
+<select name="followerId" id="followerId" >
+<option value="" disabled selected style="display:none;">Select a person</option>
+<%
+    for (int i = 0; i< javaPeople.length(); i++) {
+        JSONObject jobj = javaPeople.getJSONObject(i);
+        if (jobj.has("email") && jobj.has("password") && jobj.getString("email").length() > 1) {
+%>
+            <option value="<%= jobj.getString("_id") %>"> <%= jobj.getString("fullName") %></option>
+<%
+        }
+    }      
+%>
+
+</select></td></tr>
+<tr><td colspan=2>&nbsp;</td></tr>
+<tr><td > To follow person: 
+<select name="followedId" id="followedId" onchange="populateCollections(document.followform, this);" >
+<option value="" disabled selected style="display:none;">Select a person to follow</option>
+<%
+    for (int i = 0; i< javaPeople.length(); i++) {
+        JSONObject jobj = javaPeople.getJSONObject(i);
+%>
+        <option value="<%= jobj.getString("_id") %>"> <%= jobj.getString("fullName") %></option>
+<%
+    }      
+%>
+
+</select></td>
+<td > with collection:
+<select name="collectionId" id="collectionId" onchange="toggleContentType(document.followform, this);">
+<option value=""  selected >Follow all collections of this person</option>
+
+</select></td></tr>
+<tr><td colspan=2 >&nbsp;&nbsp;&nbsp;
+<input type=hidden name="contentType" id="contentType" value="people">
+<input type=submit value="Submit" name="followsubmit" id="followsubmit" onclick="javascript:autoFollowSubmit();">
+</td></tr>
+</table>
+</form>
+</form>
 </div>
 <br>
 </body></html>

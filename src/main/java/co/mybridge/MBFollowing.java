@@ -141,7 +141,7 @@ public class MBFollowing extends HttpServlet implements MBConverter {
 			if (totalFields > 1)
 				ja = DBUtils.retrieveObjects(req, "mb_follow", this, srchFields);
 		    else 
-		    	ja = DBUtils.retrieveObjects(req, "mb_cfollow", this, "no");
+		    	ja = DBUtils.retrieveObjects(req, "mb_follow", this, "no");
 			
 			outStr = ja.toString(4);
 		}
