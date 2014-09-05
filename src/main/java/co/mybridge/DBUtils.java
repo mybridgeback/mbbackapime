@@ -117,6 +117,9 @@ public class DBUtils {
 	    		BasicDBList idList = new BasicDBList();
 	    		BasicDBList personList = new BasicDBList();
 	    		BasicDBList profList = new BasicDBList();
+	    		BasicDBList followerList = new BasicDBList();
+	    		BasicDBList typeList = new BasicDBList();
+	    		
 	    		BasicDBObject srchobj = new BasicDBObject();
 	    		int l = srchField.length;
 	    		for (int j = 0; j< l-1; j=j+2) {
@@ -128,7 +131,12 @@ public class DBUtils {
 	    				personList.add(v);
 	    			} else if ( f.equalsIgnoreCase("profession")){
 	    				profList.add(v);
-	    			} else {
+	    			} else if ( f.equalsIgnoreCase("followerId")){
+	    			    followerList.add(v);
+	    			} else if ( f.equalsIgnoreCase("contentType")){
+	    				typeList.add(v);
+	    			}
+	    			else {
 	    				srchobj.put(f, v);
 	    			}
 	    		}
@@ -139,8 +147,13 @@ public class DBUtils {
 	    			srchobj.append("personId", new BasicDBObject("$in", personList));
 	    		}
 	    		if (profList.size() > 0) {
-	    			System.out.println("search professions=" + profList.toString());
 	    			srchobj.append("professions", new BasicDBObject("$in", profList));
+	    		}
+	    		if (followerList.size() > 0) {
+	    			srchobj.append("followerId", new BasicDBObject("$in", followerList));
+	    		}
+	    		if (typeList.size() > 0) {
+	    			srchobj.append("contentType", new BasicDBObject("$in", typeList));
 	    		}
 	    		dbC = coll.find( srchobj );
 	    	} else {
@@ -148,53 +161,7 @@ public class DBUtils {
 	    	}
 	    	while (dbC.hasNext()) {
 	    		BasicDBObject dbo = (BasicDBObject)dbC.next();
-	    		JSONObject jobj = conv.convertBasicDBToJSON(dbo);
-	    		// common code
-	    		// add entityThumb when file exist
-	    		if (dbo.containsField("thumbImage") && dbo.getString("thumbImage").length() > 4) {
-    				copyImageDimensions(dbo, jobj);
-    			} else if (jobj.has("_id") && req != null) {
-    				// look for local file under /img/ directory
-        			String objid = jobj.getString("_id");
-	    			String filename = "/img/" + objid +".jpg";
-	    			String filepath = req.getSession().getServletContext().getRealPath(filename);
-	    			File tf = new File(filepath);
-	    			if (tf.exists()) {
-	    				String myhost = "http://" + req.getServerName();
-	    				if (req.getServerPort() == 443) {
-	    					myhost = "https://" + req.getServerName();
-	    				} else if (req.getServerPort() != 80) {
-	    					myhost = "http://" + req.getServerName() + ":" + req.getServerPort();
-	    				}
-	    				jobj.put("thumbImage", myhost + filename);
-	    				
-						int _width = 0;
-						int _height = 0;
-						try {
-		    				InputStream stream = new FileInputStream(filepath);
-		    				ImageInfo info = new ImageInfo();
-		    				info.setInput(stream);
-		    				if (info.check() == false) {
-		    					System.out.println("Failed to check ImageInfo ");
-		    				} else if (info.getMimeType() == null) {
-		    					System.out.println("Invalid MIME type");
-		    				} else {
-		    					_width = info.getWidth();
-		    					_height = info.getHeight();
-		    				}
-						}
-						catch (Exception e) {
-    						System.out.println("Failed to inspect local image file dimensions for " + filepath + ": " + jobj.toString(4));
-    						e.printStackTrace();
-    					}
-	    				jobj.put("thumbWidth", _width);
-	    				jobj.put("thumbHeight", _height);
-	    				System.out.println("Successfully detected local image dimension for " 
-	    					      + filepath + " to be " + _width +"x" + _height);
-	    			} else {
-	    				System.out.println("file " + filepath + " not exist!");
-	    			}
-	    		}
+	    		JSONObject jobj = conv.convertBasicDBToJSON(dbo);	    		
 	    		retObjects.put(jobj);
 	    	}
     	}

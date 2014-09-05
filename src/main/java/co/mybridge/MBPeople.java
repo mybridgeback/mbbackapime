@@ -114,6 +114,24 @@ public class MBPeople extends HttpServlet implements MBConverter {
             	} else {
             		outStr = mbKnowl.getKnowledge(req, nextPath, null);
             	}
+            } else if (requestJSON.getString("type").equals("following")) {
+            	if (requestJSON.has("personOBJ")) {
+            		MBFollowing mf = new MBFollowing();
+            		String contentTypes[] = req.getParameterValues("contentType");
+            		if (contentTypes != null && contentTypes.length > 0) {
+            			int maxFields = 2 * contentTypes.length + 2;
+            			String srchFields[] = new String[maxFields];
+            			srchFields[0] = "followerId";
+            			srchFields[1] = requestJSON.getJSONObject("personOBJ").getString("_id");
+            			for (int i = 1; i< contentTypes.length; i++) {
+            				srchFields[2 * i] = "contentType";
+            				srchFields[2 * i + 1] = contentTypes[i];            				
+            			}
+            			outStr = DBUtils.retrieveObjects(req, "mb_follow", mf, srchFields).getString(4);           				
+            		} else {
+            			outStr = DBUtils.retrieveObjects(req, "mb_follow", mf, "followerId", requestJSON.getJSONObject("personOBJ").getString("_id")).toString(4);
+            		}
+            	}
             }
         	if (outStr == null) {
         		resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Failed to get content by ID");
@@ -168,12 +186,24 @@ public class MBPeople extends HttpServlet implements MBConverter {
 	        	out.write(outStr.getBytes());
 	        	out.flush();
         	} else if ("knowledge".equals(requestOBJ.getString("type"))) {
-        		// later
         		String personId = requestOBJ.getJSONObject("personOBJ").getString("_id");
         		String collectionId = requestOBJ.getJSONObject("collectionOBJ").getString("_id");
         		MBKnowledge knowl = new MBKnowledge();
         		String knowId = knowl.updateKnowledge(req, collectionId, null);
         		JSONArray ja = DBUtils.retrieveObjects(req, "mb_knowledge", knowl, "_id", knowId);
+	        	JSONObject oneObj = ja.getJSONObject(0);
+	        	String outStr = oneObj.toString(4);     	
+	        	resp.setContentLength(outStr.length());
+	        	out.write(outStr.getBytes());
+	        	out.flush();
+        	} else if ("following".equals(requestOBJ.getString("type"))) {
+        		String followId = req.getParameter("followId");       		
+        		String followerId = req.getParameter("followerId");
+        		String contentType = req.getParameter("contentType");
+        		String followedId = req.getParameter("followedId");
+        		MBFollowing mf = new MBFollowing();
+        		followId = mf.updateFollowing(req, followId, followerId, contentType, followedId);
+        		JSONArray ja = DBUtils.retrieveObjects(req, "mb_follow", mf, "_id", followId);
 	        	JSONObject oneObj = ja.getJSONObject(0);
 	        	String outStr = oneObj.toString(4);     	
 	        	resp.setContentLength(outStr.length());
@@ -359,10 +389,11 @@ public class MBPeople extends HttpServlet implements MBConverter {
      *  /api/people/<personId>/collections   -- to query or (with POST parameters) update a person's collection
      *  /api/people/<personId>/collections/<collectionId>
      *  /api/people/<personId>/collections/<collectionId>/knowledge
+     *  /api/people/<personId>/following/
      * 
      * @param req
      * @return    a JSONObject in the form of 
-     *       <code>{  "type": "people"|"collections"|"knowledge",
+     *       <code>{  "type": "people"|"collections"|"knowledge|following",
      *                "personOBJ" :      -- a JSONObject for this person
      *                "collectionOBJ":   -- a JSONObject for a collection
      *                "knwoledgeOBJ":    -- a JSONObject for knowledge
@@ -455,6 +486,8 @@ public class MBPeople extends HttpServlet implements MBConverter {
 					retO.put("nextPath", "");
 				}
 				
+			} else if (nextPath.length() > 2 && nextPath.startsWith("following")) {
+				retO.put("type", "following");
 			} else {
 				retO.put("type", "people");
 			}
