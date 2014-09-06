@@ -161,7 +161,12 @@ public class DBUtils {
 	    	}
 	    	while (dbC.hasNext()) {
 	    		BasicDBObject dbo = (BasicDBObject)dbC.next();
-	    		JSONObject jobj = conv.convertBasicDBToJSON(dbo);	    		
+	    		JSONObject jobj = conv.convertBasicDBToJSON(dbo);	
+	    		// common code
+	    		// add entityThumb when file exist
+	    		if (dbo.containsField("thumbImage") && dbo.getString("thumbImage").length() > 4) {
+	    		    copyImageDimensions(dbo, jobj);
+	    		}
 	    		retObjects.put(jobj);
 	    	}
     	}
