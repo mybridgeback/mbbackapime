@@ -37,10 +37,15 @@ public class MBLogin extends HttpServlet {
         String password = req.getParameter("password");
         if (email == null || email.length() < 2) {
         	resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Empty email address");
+        	return;
         }
         try {
 	        MBPeople conv = new MBPeople();
 	        JSONArray pOBJs = DBUtils.retrieveObjects(req, "mb_person", conv, "email", email);
+	        if (pOBJs == null || pOBJs.length() == 0) {
+	        	resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Incorrect email");
+	        	return;
+	        }
 	        JSONObject pOBJ = pOBJs.getJSONObject(0);
 	        if (PasswordTool.verifyPassword(password, pOBJ.getString("password"))) {
 	        	resp.setContentType("application/json");
@@ -49,7 +54,7 @@ public class MBLogin extends HttpServlet {
 	        	out.write(outStr.getBytes());
 	        	out.flush();
 	        } else {
-	        	resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Incorrect email or password");
+	        	resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Incorrect password");
 	        }
         }
         catch (Exception x) {
