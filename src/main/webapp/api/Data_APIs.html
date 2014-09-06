@@ -1,0 +1,261 @@
+<html>
+<body>
+
+<h1>MongoDB Collections and Backend search APIs</h1>
+
+<h2>People</h2>
+A person record without email and password would be considered as a leader.
+
+<h3>Schema</h3>
+<pre>
+mb_person {
+    _id:
+    email:
+    password:
+    fullName:
+    thumbImage: <url>
+    thumbWidth:
+    thumbHeight:
+    position: 
+    company:
+    education:
+    industries:  [...]
+    professions: [...]
+}
+
+</pre>
+
+<h3>APIs:</h3>
+
+<h4>Get all people</h4>
+http://mbbackapime.herokuapp.com/api/people/
+
+<h4>Get a specific person by _id (see above results)</h4>
+http://mbbackapime.herokuapp.com/api/people/53fe946fe4b0abea041080c1/
+
+<h4>To find all people with Startup profession</h4>
+http://mbbackapime.herokuapp.com/api/people?profession=Startup
+
+<h4>To find all people with CEO or Startup profession</h4>
+http://mbbackapime.herokuapp.com/api/people?profession=CEO&profession=Startup
+
+
+<h2>Collection</h2>
+
+<h3>Schema</h3>
+<pre>
+mb_collection {
+    _id:
+    personId:           -- indexed
+    collectonTitle:
+    knowledge: [
+           { knowledgeId:          -- _id from mb_knowledge
+             customDescription:     -- custom description for the content from this user
+           }
+           .....
+    ]
+}
+</pre>
+
+<h3>APIs:</h3>
+
+<h4>To get all collections:</h4>
+http://mbmackapime.herokuapp.com/api/collections/
+
+<h4>To get all collections related to one person</h4>
+http://mbbackapime.herokuapp.com/api/people/53fe946fe4b0abea041080c1/collections/
+
+<h4>or </h4>
+
+http://mbbackapime.herokuapp.com/api/collections/?personId=53fe946fe4b0abea041080c1
+
+
+
+<h2>Knowledge</h2>
+
+<h3>Schema</h3>
+<pre>
+mb_knowledge {
+    _id:
+    title:                 -- original title, the same across all users
+    contentSource:         -- text description for the content source, such as YouTube
+    contentType:           -- video or web page, etc.
+    publisher:             -- usually producers of the content
+    externalURL:
+    htmlBody:
+    width:
+    height:
+    thumbImage: 
+    thumbWidth:
+    thumbHeight:
+}
+</pre>
+
+<h3>APIs:</h3>
+
+<h4>To load all knowledge</h4>
+http://mbbackapime.herokuapp.com/api/knowledge/
+
+<h4>To load all knowledge pertaining to a collection</h4>
+
+http://mbbackapime.herokuapp.com/api/people/53fe946fe4b0abea041080c1/collections/53fe9ad2e4b0abea041080cc/knowledge
+
+<h4>To load a specific knowledge from _id (use knowledgeId from mb_collection)</h4>
+http://mbbackapime.herokuapp.com/api/knowledge/53fe9b88e4b0abea041080cd
+
+<h2>Follow or Favorite</h2>
+
+<h3>Schema</h3>
+<pre>
+mb_follow {
+    _id:        
+    followerId:    -- _id for a real user who follow another person or collection or knowledge
+    contentType:   --  "people" or "collections", or "knowledge"
+    followedId:    -- _id field from mb_person or mb_collection or mb_knowledge
+}
+</pre>
+
+<h3>APIs</h3>
+
+<h4>To find a list of people this user is following</h4>
+http://mbbackapime.herokuapp.com/api/people/53fe946fe4b0abea041080c1/following/?contentType=people
+
+<h4>To find a list of collections this user is following</h4>
+http://mbbackapime.herokuapp.com/api/people/53fe946fe4b0abea041080c1/following/?contentType=collections
+
+<h4>To find a list of knowledge this user is marked as favorite</h4>
+http://mbbackapime.herokuapp.com/api/people/53fe946fe4b0abea041080c1/following/?contentType=knowledge
+
+
+
+<h2>Sample flows</h2>
+
+<h3>To get all people whose profession is Developer:</h3>
+http://mbbackapime.herokuapp.com/api/people/?profession=Developer
+
+
+<pre>
+[
+    {
+        "position": "CEO and founder",
+        "thumbImage": "http://i.imgur.com/0vQ3uMY.jpg",
+        "_id": "<font color=red>53fe9581e4b0abea041080c3</font>",
+        "email": "",
+        "company": "Tesla, SpaceX",
+        "industries": ["Internet/Computer Software"],
+        "thumbWidth": 440,
+        "fullName": "Elon Musk",
+        "education": "University of Pennsylvania B.S.",
+        "password": "",
+        "professions": [
+            "Startup",
+            "CEO",
+            "Developer"
+        ],
+        "thumbHeight": 393
+    },
+    {
+        "position": "CEO and Co-funder",
+        "thumbImage": "http://i.imgur.com/WVud81n.jpg",
+        "_id": "53fe98ece4b0abea041080c8",
+        "email": "",
+        "company": "Instagram",
+        "industries": ["Internet/Computer Software"],
+        "thumbWidth": 374,
+        "fullName": "Kevin Systrom",
+        "education": "Stanford B.S.",
+        "password": "",
+        "professions": [
+            "Startup",
+            "CEO",
+            "Developer"
+        ],
+        "thumbHeight": 499
+    },
+    {
+        "position": "CEO",
+        "thumbImage": "http://i.imgur.com/h2lnjXi.jpg",
+        "_id": "53fe99b8e4b0abea041080ca",
+        "email": "",
+        "company": "Microsoft",
+        "industries": ["Internet/Computer Software"],
+        "thumbWidth": 440,
+        "fullName": "Satya Nadella",
+        "education": "University of Chicago Booth M.B.A |  University of Wisconsin M.S.",
+        "password": "",
+        "professions": [
+            "CEO",
+            "Developer"
+        ],
+        "thumbHeight": 382
+    }
+]
+</pre>
+
+
+<h3>Get Elon Musk's collections</h3>
+http://mbbackapime.herokuapp.com/api/people/<font color=red>53fe9581e4b0abea041080c3</font>/collections/
+
+<pre>
+[{
+    "knowledge": [{
+        "knowledgeId": "<font color=red>53fe9c74e4b0abea041080cf</font>",
+        "customDescription": "Elon Musk: Tesla Motors CEO, Stanford GSB 2013 Entrepreneurial Company of the Year"
+    }],
+    "_id": "<font color=red>53fe9bc3e4b0abea041080ce</font>",
+    "personId": "53fe9581e4b0abea041080c3",
+    "collectionTitle": "Start up"
+}]
+
+</pre>
+    
+<h3>Get a knowledge content of this collection (note above "knowledgeId" values)</h3>
+http://mbbackapime.herokuapp.com/api/knowledge/<font color=red>53fe9d41e4b0abea041080d1</font>
+<h5>or </h5>
+http://mbbackapime.herokuapp.com/api/knowledge/?_id=<font color=red>53fe9d41e4b0abea041080d1</font>
+<pre>
+{
+    "title": "\"Why Growth Hacking Isn't ALWAYS the Answer\" - Sprig - Gagan Biyani [COMMERCISM 2014]",
+    "thumbImage": "http://i.imgur.com/0yYypGH.png",
+    "height": 315,
+    "_id": "53fe9d41e4b0abea041080d1",
+    "width": 560,
+    "thumbWidth": 1100,
+    "htmlBody": "&lt;iframe width=\"560\" height=\"315\" src=\"//www.youtube.com/embed/xPl1sQjoqWM?rel=0\" frameborder=\"0\" allowfullscreen>&lt;\/iframe>",
+    "thumbHeight": 616
+}
+</pre>
+
+<h3>Get a list of knowledge based on parameter _id fields</h3>
+http://mbbackapime.herokuapp.com/api/knowledge/?_id=<font color=red>53fe9d41e4b0abea041080d1</font>&_id=<font color=red>53fe9c74e4b0abea041080cf</font>
+
+<pre>
+[
+    {
+        "title": "Elon Musk: Tesla Motors CEO, Stanford GSB 2013 Entrepreneurial Company of the Year",
+        "thumbImage": "http://i.imgur.com/Tqdpf4i.png",
+        "height": 315,
+        "_id": "<font color=red>53fe9c74e4b0abea041080cf</font>",
+        "width": 560,
+        "thumbWidth": 1102,
+        "htmlBody": "&lt;iframe width=\"560\" height=\"315\" src=\"//www.youtube.com/embed/MBItc_QAUUM?rel=0\" frameborder=\"0\" allowfullscreen>&lt;\/iframe>",
+        "thumbHeight": 612
+    },
+    {
+        "title": "\"Why Growth Hacking Isn't ALWAYS the Answer\" - Sprig - Gagan Biyani [COMMERCISM 2014]",
+        "thumbImage": "http://i.imgur.com/0yYypGH.png",
+        "height": 315,
+        "_id": "<font color=red>53fe9d41e4b0abea041080d1</font>",
+        "width": 560,
+        "thumbWidth": 1100,
+        "htmlBody": "&lt;iframe width=\"560\" height=\"315\" src=\"//www.youtube.com/embed/xPl1sQjoqWM?rel=0\" frameborder=\"0\" allowfullscreen>&lt;\/iframe>",
+        "thumbHeight": 616
+    }
+]
+</pre>
+
+
+</body>
+</html>
+
+

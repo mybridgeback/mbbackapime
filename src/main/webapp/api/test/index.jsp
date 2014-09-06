@@ -65,9 +65,31 @@
   function toggleContentType(formElem, collDropDown) {
       var coll = collDropDown.value;
       if (coll != null && coll.length > 1) {
-          formElem.contentType.value="collections";
+          if (collDropDown.name == "collectionId") {
+          	 formElem.contentType.value="collections";
+          	 populateKnowledge(formElem, collDropDown);
+          	 document.getElementById("followperson").style.display="none";
+          	 document.getElementById("followcollection").style.display="block";
+          	 document.getElementById("favoriteknowledge").style.display="none";
+          } else if (collDropDown.name == "knowledgeId") {
+             formElem.contentType.value="knowledge";
+             document.getElementById("followperson").style.display="none";
+          	 document.getElementById("followcollection").style.display="none";
+          	 document.getElementById("favoriteknowledge").style.display="block";
+          }
       } else {
-          formElem.contentType.value="people";
+          if (collDropDown.name == "collectionId") {
+          	formElem.contentType.value="people";
+          	document.getElementById("followperson").style.display="block";
+          	 document.getElementById("followcollection").style.display="none";
+          	 document.getElementById("favoriteknowledge").style.display="none";
+          } else {
+             formElem.contentType.value="collections";
+             document.getElementById("followperson").style.display="none";
+          	 document.getElementById("followcollection").style.display="block";
+          	 document.getElementById("favoriteknowledge").style.display="none";
+          	 populateKnowledge(formElem, collDropDown);
+          }
       }
   }
   /**
@@ -88,6 +110,27 @@
               collOpt.text = coll.collectionTitle;
               collOpt.value = coll._id;
               selectElem.add(collOpt);
+          }
+      }
+  }
+   function populateKnowledge(formElem, collDropDown) {
+      var cid = collDropDown.value;
+      var selectElem = formElem.knowledgeId;
+      // remove everything except the first one
+      selectElem.options.length = 1;
+      
+      for (var x=0; x<jsCollections.length; x++) {
+           
+          var coll = jsCollections[x];
+          var collcid = coll._id;
+          if (collcid == cid) {
+              var knowledges = coll.knowledge;
+              for (var k = 0; k< knowledges.length; k++) {
+                  var collOpt = document.createElement("option");
+                  collOpt.text = knowledges[k].customDescription;
+                  collOpt.value = knowledges[k].knowledgeId;
+                  selectElem.add(collOpt);
+              }
           }
       }
   }
@@ -293,7 +336,7 @@ onClick="javascript:autoKnowlSubmit();"></td></tr>
 <h2>Follow a person or a collection</h2>
 <form name="followform" id="followform"  action="/api/people/" method="post">
 <table width="80%" border="0" align="center">
-<tr><td colspan=2> Current user :
+<tr><td colspan=3> Current user :
 <select name="followerId" id="followerId" >
 <option value="" disabled selected style="display:none;">Select a person</option>
 <%
@@ -308,8 +351,10 @@ onClick="javascript:autoKnowlSubmit();"></td></tr>
 %>
 
 </select></td></tr>
-<tr><td colspan=2>&nbsp;</td></tr>
-<tr><td > To follow person: 
+<tr><td><span id="followperson" name="followperson" style="display:block"><b>Follow a person</b></span></td>
+<td><span id="followcollection" name="followcollection" style="display:none"><b>Follow a collection</b></span></td>
+<td><span id="favoriteknowledge" name="favoriteknowledge" style="display:none"><b>Favorite knowledge</b></span></td></tr>
+<tr><td >
 <select name="followedId" id="followedId" onchange="populateCollections(document.followform, this);" >
 <option value="" disabled selected style="display:none;">Select a person to follow</option>
 <%
@@ -322,11 +367,17 @@ onClick="javascript:autoKnowlSubmit();"></td></tr>
 %>
 
 </select></td>
-<td > with collection:
+<td > 
 <select name="collectionId" id="collectionId" onchange="toggleContentType(document.followform, this);">
 <option value=""  selected >Follow all collections of this person</option>
 
-</select></td></tr>
+</select></td>
+<td > 
+<select name="knowledgeId" id="knowledgeId" onchange="toggleContentType(document.followform, this);">
+<option value=""  selected >Follow all contents of this collection</option>
+
+</select></td>
+</tr>
 <tr><td colspan=2 >&nbsp;&nbsp;&nbsp;
 <input type=hidden name="contentType" id="contentType" value="people">
 <input type=submit value="Submit" name="followsubmit" id="followsubmit" onclick="javascript:autoFollowSubmit();">
