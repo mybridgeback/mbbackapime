@@ -387,4 +387,26 @@ onClick="javascript:autoKnowlSubmit();"></td></tr>
 </form>
 </div>
 <br>
+<hr>
+<div>
+<h2>Sample page to demonstrate login API</h2>
+<form method="POST" action="/api/login">
+<table width="85%" border=0 align="center">
+<tr><td>
+Email: </td><td><input type=text name="email"></td></tr>
+<tr><td>Password: </td><td><input type=text name="password"></td></tr>
+<tr><td colspan=2>&nbsp;&nbsp;<input type=submit name="Submit" value="Submit"></td></tr>
+</table>
+</form>
+</div>
+<hr>
+<div>
+<h2>Extracting contents from URL</h2>
+<form method="GET" action="/api/urlextractor">
+<table width="85%" border=0 align="center">
+<tr><td>
+URL: <input type=text name="url" size="80"></td>
+&nbsp;&nbsp;<input type=submit name="Submit" value="Submit"></td></tr>
+</table>
+</form>
 </body></html>
