@@ -2,11 +2,14 @@ package co.mybridge;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.TimeZone;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -227,7 +230,13 @@ public class MBPeople extends HttpServlet implements MBConverter {
 	   	JSONObject retObj = new JSONObject();
     	try {
     		if (p.containsField("_id")) {
-    			retObj.put("_id", p.getString("_id"));
+    			ObjectId myId = p.getObjectId("_id");
+    			DateFormat df = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, Locale.US);
+    			df.setTimeZone(TimeZone.getTimeZone("GMT"));
+    			java.util.Date cd = myId.getDate();
+    			retObj.put("_id", myId.toString());
+    			retObj.put("createTimeMillis", cd.getTime());
+    			retObj.put("createTimeGMT", df.format(cd));
     		}
     		String fname = p.getString("fullName");
     		retObj.put("fullName", fname);

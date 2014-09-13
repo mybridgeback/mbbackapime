@@ -1,7 +1,10 @@
 package co.mybridge;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -62,7 +65,13 @@ public class MBKnowledge extends HttpServlet implements MBConverter {
 		JSONObject retJ = new JSONObject();
 		try {
 			if (bobj.containsField("_id")) {
-				retJ.put("_id", bobj.getString("_id"));
+				ObjectId myId = bobj.getObjectId("_id");
+    			DateFormat df = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, Locale.US);
+    			df.setTimeZone(TimeZone.getTimeZone("GMT"));
+    			java.util.Date cd = myId.getDate();
+    			retJ.put("_id", myId.toString());
+    			retJ.put("createTimeMillis", cd.getTime());
+    			retJ.put("createTimeGMT", df.format(cd));
 			}
 			retJ.put("title", bobj.getString("title"));
 			retJ.put("width", bobj.getInt("width"));
